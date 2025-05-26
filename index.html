@@ -1,245 +1,256 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fotomultiplicador 2D | QuantumDraft</title>
-    <style>
-       :root {
-            --primary: #0f172a;
-            --secondary: #1e293b;
-            --accent: #3b82f6;
-            --text: #f1f5f9;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --border-radius: 10px;
-            --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            --font: 'Inter', sans-serif;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fotomultiplicador 2D | QuantumDraft</title>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --secondary: #1e293b;
+      --accent: #3b82f6;
+      --text: #f1f5f9;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border-radius: 10px;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      --font: 'Inter', sans-serif;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        body {
-            font-family: var(--font);
-            background-color: var(--bg);
-            color: var(--primary);
-            padding: 40px 20px;
-            min-height: 100vh;
-        }
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--primary);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--secondary);
-            text-align: center;
-            margin-bottom: 30px;
-        }
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--secondary);
+      text-align: center;
+      margin-bottom: 30px;
+    }
 
-        .main-container {
-            display: flex;
-            justify-content:left;
-            align-items: flex-start;
-            gap: 40px;
-            flex-wrap: wrap;
-        }
+    .main-container {
+      display: flex;
+      justify-content: left;
+      align-items: flex-start;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
 
-        .controls {
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            min-width: 250px;
-            max-width: 300px;
-        }
+    .controls {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      min-width: 250px;
+      max-width: 300px;
+    }
 
-        .controls label {
-            font-weight: 500;
-        }
+    .controls label {
+      font-weight: 500;
+    }
 
-        input[type="color"],
-        input[type="range"],
-        input[type="text"] {
-            border: 1px solid #cbd5e1;
-            border-radius: var(--border-radius);
-            font-size: 0.95rem;
-            background-color: #f1f5f9;
-            color: var(--primary);
-            transition: 0.2s ease;
-        }
-        input[type="color"],
-        input[type="text"] {
-            padding: 5px 10px;
-        }
-        input[type="color"]:hover,
-        input[type="range"]:hover,
-        input[type="text"]:hover {
-            border-color: var(--accent);
-        }
+    input[type="color"],
+    input[type="range"],
+    input[type="text"] {
+      border: 1px solid #cbd5e1;
+      border-radius: var(--border-radius);
+      font-size: 0.95rem;
+      background-color: #f1f5f9;
+      color: var(--primary);
+      transition: 0.2s ease;
+    }
 
-        input[type="text"] {
-            min-width: 100%;
-        }
+    input[type="color"],
+    input[type="text"] {
+      padding: 5px 10px;
+    }
 
-        button {
-            background-color: var(--accent);
-            color: var(--text);
-            padding: 8px 16px;
-            border: none;
-            border-radius: var(--border-radius);
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s ease, transform 0.1s ease;
-        }
+    input[type="color"]:hover,
+    input[type="range"]:hover,
+    input[type="text"]:hover {
+      border-color: var(--accent);
+    }
 
-        button:hover {
-            background-color: #2563eb;
-            transform: translateY(-2px);
-        }
+    input[type="text"] {
+      min-width: 100%;
+    }
 
-        button:active {
-            transform: translateY(0);
-        }
+    button {
+      background-color: var(--accent);
+      color: var(--text);
+      padding: 8px 16px;
+      border: none;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
 
-        canvas {
-            border: 2px solid #94a3b8;
-            border-radius: var(--border-radius);
-            background: white;
-            box-shadow: var(--shadow);
-            transition: box-shadow 0.3s ease;
-            cursor: crosshair;
-            max-width: 100%;
-        }
+    button:hover {
+      background-color: #2563eb;
+      transform: translateY(-2px);
+    }
 
-        canvas:hover {
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-        }
+    button:active {
+      transform: translateY(0);
+    }
 
-        @media (max-width: 768px) {
-            .main-container {
-                flex-direction: column;
-                align-items: center;
-            }
-            canvas {
-                width: 100%;
-                height: auto;
-            }
-        }
-    </style>
+    canvas {
+      border: 2px solid #94a3b8;
+      border-radius: var(--border-radius);
+      background: transparent;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.3s ease;
+      cursor: crosshair;
+      max-width: 100%;
+    }
+
+    canvas:hover {
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      canvas {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Fotomultiplicador 2D | QuantumDraft</h1>
-    <div class="main-container">
-        <div class="controls">
-            <button id="clear-btn">Limpiar Canvas</button>
-            <button id="save-btn">Guardar Dibujo</button>
-            <button id="eraser-btn">Borrador</button>
-            <input type="text" id="drawing-name" placeholder="Nombre del dibujo">
-            <label for="color-picker">Color:</label>
-            <input type="color" id="color-picker" value="#000000">
-            <label for="size-slider">Tamaño:</label>
-            <input type="range" id="size-slider" min="1" max="50" value="5">
-        </div>
-        <canvas id="drawing-canvas" width="900" height="500"></canvas>
+  <h1>Fotomultiplicador 2D | QuantumDraft</h1>
+  <div class="main-container">
+    <div class="controls">
+      <button id="clear-btn">Limpiar Canvas</button>
+      <button id="save-btn">Guardar Dibujo</button>
+      <button id="eraser-btn">Borrador</button>
+      <input type="text" id="drawing-name" placeholder="Nombre del dibujo" />
+      <label for="color-picker">Color:</label>
+      <input type="color" id="color-picker" value="#000000" />
+      <label for="size-slider">Tamaño:</label>
+      <input type="range" id="size-slider" min="1" max="50" value="5" />
     </div>
-    <script>
-        const canvas = document.getElementById('drawing-canvas');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-        let strokeColor = document.getElementById('color-picker').value;
-        let lineWidth = document.getElementById('size-slider').value;
-        let isErasing = false;
+    <canvas id="drawing-canvas" width="900" height="500"></canvas>
+  </div>
+  <script>
+    const canvas = document.getElementById('drawing-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    let strokeColor = document.getElementById('color-picker').value;
+    let lineWidth = document.getElementById('size-slider').value;
+    let isErasing = false;
+    let compositeMode = 'source-over';
 
-        document.getElementById('color-picker').addEventListener('input', e => {
-            strokeColor = e.target.value;
-        });
+    ctx.fillStyle = 'rgba(0,0,0,0)';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        document.getElementById('size-slider').addEventListener('input', e => {
-            lineWidth = e.target.value;
-        });
+    document.getElementById('color-picker').addEventListener('input', e => {
+      strokeColor = e.target.value;
+    });
 
-        document.getElementById('clear-btn').addEventListener('click', () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        });
+    document.getElementById('size-slider').addEventListener('input', e => {
+      lineWidth = e.target.value;
+    });
 
-        document.getElementById('eraser-btn').addEventListener('click', () => {
-            isErasing = !isErasing;
-            const eraserBtn = document.getElementById('eraser-btn');
-            if (isErasing) {
-                eraserBtn.textContent = "Modo lápiz";
-                eraserBtn.style.backgroundColor = "#f87171";
-            } else {
-                eraserBtn.textContent = "Borrador";
-                eraserBtn.style.backgroundColor = "";
-            }
-        });
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
 
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
+    document.getElementById('eraser-btn').addEventListener('click', () => {
+      isErasing = !isErasing;
+      const eraserBtn = document.getElementById('eraser-btn');
+      if (isErasing) {
+        eraserBtn.textContent = "Modo lápiz";
+        eraserBtn.style.backgroundColor = "#f87171";
+        compositeMode = 'destination-out';
+      } else {
+        eraserBtn.textContent = "Borrador";
+        eraserBtn.style.backgroundColor = "";
+        compositeMode = 'source-over';
+      }
+      ctx.globalCompositeOperation = compositeMode;
+    });
 
-        function startDrawing(e) {
-            isDrawing = true;
-            [lastX, lastY] = [e.offsetX, e.offsetY];
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    function startDrawing(e) {
+      isDrawing = true;
+      [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    document.getElementById('save-btn').addEventListener('click', () => {
+      const nameInput = document.getElementById('drawing-name').value.trim();
+      if (!nameInput) {
+        alert("Por favor, introduce un nombre para el dibujo.");
+        return;
+      }
+
+      // Export as PNG with transparency
+      const imageData = canvas.toDataURL('image/png');
+
+      fetch('save_canvas.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          image: imageData,
+          name: nameInput
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert(`Dibujo guardado como ${data.filename}`);
+        } else {
+          alert("Error al guardar: " + data.error);
         }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(e.offsetX, e.offsetY);
-            ctx.strokeStyle = isErasing ? "#ffffff" : strokeColor;
-            ctx.lineWidth = lineWidth;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.stroke();
-            [lastX, lastY] = [e.offsetX, e.offsetY];
-        }
-
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        document.getElementById('save-btn').addEventListener('click', () => {
-            const nameInput = document.getElementById('drawing-name').value.trim();
-            if (!nameInput) {
-                alert("Por favor, introduce un nombre para el dibujo.");
-                return;
-            }
-
-            const imageData = canvas.toDataURL('image/png');
-
-            fetch('save_canvas.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    image: imageData,
-                    name: nameInput
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert(`Dibujo guardado como ${data.filename}`);
-                } else {
-                    alert("Error al guardar: " + data.error);
-                }
-            })
-            .catch(err => {
-                alert("Error de conexión: " + err.message);
-            });
-        });
-    </script>
+      })
+      .catch(err => {
+        alert("Error de conexión: " + err.message);
+      });
+    });
+  </script>
 </body>
 </html>
