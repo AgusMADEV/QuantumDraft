@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fotomultiplicador 2D | QuantumDraft</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid #333;
+            background: white;
+            cursor: crosshair;
+        }
+        .controls {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            background-color: #333;
+            color: whitesmoke;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fotomultiplicador 2D | QuantumDraft</h1>
+    <div class="controls">
+        <button id="clear-btn">Clear Canvas</button>
+        Color: <input type="color" id="color-picker" value="#000000">
+        Size: <input type="range" id="size-slider" min="1" max="50" value="5">
+    </div>
+    <canvas id="drawing-canvas" width="800" height="500"></canvas>
+
+    <script>
+        // Get canvas and context
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Drawing state
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let strokeColor = document.getElementById('color-picker').value;
+        let lineWidth = document.getElementById('size-slider').value;
+
+        // Event listeners for controls
+        document.getElementById('color-picker').addEventListener('input', (e) => {
+            strokeColor = e.target.value;
+        });
+        
+        document.getElementById('size-slider').addEventListener('input', (e) => {
+            lineWidth = e.target.value;
+        });
+        
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Mouse event handlers
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+    </script>
+</body>
+</html>
