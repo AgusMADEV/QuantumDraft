@@ -120,6 +120,7 @@
         canvas:hover {
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
         }
+
         @media (max-width: 768px) {
             .main-container {
                 flex-direction: column;
@@ -138,6 +139,7 @@
         <div class="controls">
             <button id="clear-btn">Limpiar Canvas</button>
             <button id="save-btn">Guardar Dibujo</button>
+            <button id="eraser-btn">Borrador</button>
             <input type="text" id="drawing-name" placeholder="Nombre del dibujo">
             <label for="color-picker">Color:</label>
             <input type="color" id="color-picker" value="#000000">
@@ -154,6 +156,7 @@
         let lastY = 0;
         let strokeColor = document.getElementById('color-picker').value;
         let lineWidth = document.getElementById('size-slider').value;
+        let isErasing = false;
 
         document.getElementById('color-picker').addEventListener('input', e => {
             strokeColor = e.target.value;
@@ -165,6 +168,18 @@
 
         document.getElementById('clear-btn').addEventListener('click', () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        document.getElementById('eraser-btn').addEventListener('click', () => {
+            isErasing = !isErasing;
+            const eraserBtn = document.getElementById('eraser-btn');
+            if (isErasing) {
+                eraserBtn.textContent = "Modo lápiz";
+                eraserBtn.style.backgroundColor = "#f87171";
+            } else {
+                eraserBtn.textContent = "Borrador";
+                eraserBtn.style.backgroundColor = "";
+            }
         });
 
         canvas.addEventListener('mousedown', startDrawing);
@@ -182,7 +197,7 @@
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(e.offsetX, e.offsetY);
-            ctx.strokeStyle = strokeColor;
+            ctx.strokeStyle = isErasing ? "#ffffff" : strokeColor;
             ctx.lineWidth = lineWidth;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
