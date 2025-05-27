@@ -4,137 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fotomultiplicador 2D | QuantumDraft</title>
-  <style>
-    :root {
-      --primary: #0f172a;
-      --secondary: #1e293b;
-      --accent: #3b82f6;
-      --text: #f1f5f9;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --border-radius: 10px;
-      --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-      --font: 'Inter', sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: var(--font);
-      background-color: var(--bg);
-      color: var(--primary);
-      padding: 40px 20px;
-      min-height: 100vh;
-    }
-
-    h1 {
-      font-size: 2rem;
-      font-weight: 600;
-      color: var(--secondary);
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .main-container {
-      display: flex;
-      justify-content: left;
-      align-items: flex-start;
-      gap: 40px;
-      flex-wrap: wrap;
-    }
-
-    .controls {
-      background: var(--card-bg);
-      border-radius: var(--border-radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      min-width: 250px;
-      max-width: 300px;
-    }
-
-    .controls label {
-      font-weight: 500;
-    }
-
-    input[type="color"],
-    input[type="range"],
-    input[type="text"] {
-      border: 1px solid #cbd5e1;
-      border-radius: var(--border-radius);
-      font-size: 0.95rem;
-      background-color: #f1f5f9;
-      color: var(--primary);
-      transition: 0.2s ease;
-    }
-
-    input[type="color"],
-    input[type="text"] {
-      padding: 5px 10px;
-    }
-
-    input[type="color"]:hover,
-    input[type="range"]:hover,
-    input[type="text"]:hover {
-      border-color: var(--accent);
-    }
-
-    input[type="text"] {
-      min-width: 100%;
-    }
-
-    button {
-      background-color: var(--accent);
-      color: var(--text);
-      padding: 8px 16px;
-      border: none;
-      border-radius: var(--border-radius);
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.1s ease;
-    }
-
-    button:hover {
-      background-color: #2563eb;
-      transform: translateY(-2px);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    canvas {
-      border: 2px solid #94a3b8;
-      border-radius: var(--border-radius);
-      background: transparent;
-      box-shadow: var(--shadow);
-      transition: box-shadow 0.3s ease;
-      cursor: crosshair;
-      max-width: 100%;
-    }
-
-    canvas:hover {
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-    }
-
-    @media (max-width: 768px) {
-      .main-container {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      canvas {
-        width: 100%;
-        height: auto;
-      }
-    }
-  </style>
+  <link rel ="stylesheet" href="style.css">
 </head>
 <body>
   <h1>Fotomultiplicador 2D | QuantumDraft</h1>
@@ -149,7 +19,9 @@
       <label for="size-slider">Tamaño:</label>
       <input type="range" id="size-slider" min="1" max="50" value="5" />
     </div>
-    <canvas id="drawing-canvas" width="900" height="500"></canvas>
+    <div class="canvas-container">
+      <canvas id="drawing-canvas"></canvas>
+    </div>
   </div>
   <script>
     const canvas = document.getElementById('drawing-canvas');
@@ -162,8 +34,16 @@
     let isErasing = false;
     let compositeMode = 'source-over';
 
-    ctx.fillStyle = 'rgba(0,0,0,0)';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function resizeCanvas() {
+      const container = canvas.parentElement;
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientWidth * 0.47; // Ajusta la altura según la proporción deseada
+      ctx.fillStyle = 'rgba(0,0,0,0)';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
     document.getElementById('color-picker').addEventListener('input', e => {
       strokeColor = e.target.value;

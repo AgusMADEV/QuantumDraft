@@ -51,3 +51,4 @@ fputcsv($fp, $csvLine);
 fclose($fp);
 
 echo json_encode(['success' => true, 'filename' => $filename]);
+?>
