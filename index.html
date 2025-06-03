@@ -44,6 +44,19 @@
           <input type="number" id="select-height" min="1" value="0">
         </div>
       </div>
+      <!-- NUEVO: controles de fotones -->
+      <div class="photon-controls" style="margin-top: 10px;">
+        <label for="photon-count">Número de fotones:</label>
+        <input 
+          id="photon-count" 
+          type="number" 
+          min="0" 
+          max="5" 
+          value="0" 
+          style="width: 60px; margin: 0 8px;"
+        />
+        <button id="play-photons-btn">Play</button>
+      </div>
       <button id="clear-btn">Limpiar Canvas</button>
       <input type="text" id="drawing-name" placeholder="Nombre del dibujo" />
       <button id="save-btn">Guardar Dibujo</button>
