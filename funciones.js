@@ -2,20 +2,36 @@
 const canvas = document.getElementById('drawing-canvas');
 const ctx = canvas.getContext('2d');
 
-let currentTool = 'pencil', isDrawing = false;
+let currentTool = 'pencil',
+    isDrawing = false;
 let startX = 0, startY = 0, lastX = 0, lastY = 0;
 let strokeColor = document.getElementById('color-picker').value;
 let fillColor   = document.getElementById('shape-fill').value;
 let borderColor = document.getElementById('shape-border').value;
 let lineWidth   = document.getElementById('size-slider').value;
 
-let shapes = [], polygonPoints = [], pathPoints = [], freehandPoints = [];
-let photons = [];                   
-let selectedShape = null, action = null, handleIndex = -1;
+let shapes = [],
+    polygonPoints = [],
+    pathPoints = [],
+    freehandPoints = [];
+let photons = [];
+let selectedShape = null,
+    action = null,
+    handleIndex = -1;
 
 const selectParams = document.getElementById('selection-params');
 const inputWidth    = document.getElementById('select-width');
 const inputHeight   = document.getElementById('select-height');
+
+// Lista de opciones para “Tipo de componente”
+const COMPONENT_TYPES = [
+  'dinodo',
+  'photocathode',
+  'grid',
+  'accelerator',
+  'ánodo',
+  'otro'
+];
 
 // --- Clase Photon (POO) ---
 class Photon {
@@ -46,6 +62,7 @@ function resizeCanvas() {
   canvas.width  = c.clientWidth;
   canvas.height = c.clientWidth * 0.47;
   redrawAll();
+  updateShapesInfoTable();
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
@@ -55,7 +72,8 @@ function getBoundingBox(s) {
   if (s.type === 'rectangle' || s.type === 'ellipse') {
     return { x: s.x, y: s.y, w: s.w, h: s.h };
   } else {
-    const xs = s.points.map(p => p.x), ys = s.points.map(p => p.y);
+    const xs = s.points.map(p => p.x),
+          ys = s.points.map(p => p.y);
     return {
       x: Math.min(...xs),
       y: Math.min(...ys),
@@ -87,7 +105,10 @@ function detectHandle(x, y, box, angle = 0) {
     { x: box.x,         y: box.y + box.h }
   ];
   for (let i = 0; i < corners.length; i++) {
-    if (Math.abs(p.x - corners[i].x) <= size && Math.abs(p.y - corners[i].y) <= size) {
+    if (
+      Math.abs(p.x - corners[i].x) <= size &&
+      Math.abs(p.y - corners[i].y) <= size
+    ) {
       return i;
     }
   }
@@ -142,6 +163,7 @@ function drawRotateHandle(box, angle = 0) {
 // --- Actualizar UI de selección ---
 function updateSelectionUI() {
   const s = shapes[selectedShape];
+  if (!s) return;
   if (['rectangle','ellipse','polygon','path'].includes(s.type)) {
     document.getElementById('shape-params').style.display = 'flex';
     document.getElementById('global-color').style.display = 'none';
@@ -164,6 +186,7 @@ document.getElementById('shape-fill').addEventListener('input', e => {
   if (selectedShape != null) {
     shapes[selectedShape].fill = e.target.value;
     redrawAll();
+    updateShapesInfoTable();
   } else {
     fillColor = e.target.value;
   }
@@ -172,6 +195,7 @@ document.getElementById('shape-border').addEventListener('input', e => {
   if (selectedShape != null) {
     shapes[selectedShape].border = e.target.value;
     redrawAll();
+    updateShapesInfoTable();
   } else {
     borderColor = e.target.value;
   }
@@ -180,6 +204,7 @@ document.getElementById('color-picker').addEventListener('input', e => {
   if (selectedShape != null) {
     shapes[selectedShape].strokeColor = e.target.value;
     redrawAll();
+    updateShapesInfoTable();
   } else {
     strokeColor = e.target.value;
   }
@@ -188,6 +213,7 @@ document.getElementById('size-slider').addEventListener('input', e => {
   if (selectedShape != null) {
     shapes[selectedShape].lineWidth = e.target.value;
     redrawAll();
+    updateShapesInfoTable();
   } else {
     lineWidth = e.target.value;
   }
@@ -205,6 +231,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
   document.getElementById('global-color').style.display = 'block';
   selectParams.style.display = 'none';
   redrawAll();
+  updateShapesInfoTable();
 });
 
 // --- Botones de selección de herramienta ---
@@ -238,6 +265,7 @@ inputWidth.addEventListener('input', () => {
     const s = shapes[selectedShape];
     s.w = (s.w < 0 ? -1 : 1) * parseInt(inputWidth.value, 10);
     redrawAll();
+    updateShapesInfoTable();
   }
 });
 inputHeight.addEventListener('input', () => {
@@ -245,6 +273,7 @@ inputHeight.addEventListener('input', () => {
     const s = shapes[selectedShape];
     s.h = (s.h < 0 ? -1 : 1) * parseInt(inputHeight.value, 10);
     redrawAll();
+    updateShapesInfoTable();
   }
 });
 
@@ -257,15 +286,19 @@ function hitTest(x, y) {
       const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
       const p = unrotatePoint(x, y, cx, cy, s.angle);
       if (
-        p.x >= Math.min(box.x, box.x + box.w) && p.x <= Math.max(box.x, box.x + box.w) &&
-        p.y >= Math.min(box.y, box.y + box.h) && p.y <= Math.max(box.y, box.y + box.h)
+        p.x >= Math.min(box.x, box.x + box.w) &&
+        p.x <= Math.max(box.x, box.x + box.w) &&
+        p.y >= Math.min(box.y, box.y + box.h) &&
+        p.y <= Math.max(box.y, box.y + box.h)
       ) {
         return i;
       }
     } else {
       if (
-        x >= Math.min(box.x, box.x + box.w) && x <= Math.max(box.x, box.x + box.w) &&
-        y >= Math.min(box.y, box.y + box.h) && y <= Math.max(box.y, box.y + box.h)
+        x >= Math.min(box.x, box.x + box.w) &&
+        x <= Math.max(box.x, box.x + box.w) &&
+        y >= Math.min(box.y, box.y + box.h) &&
+        y <= Math.max(box.y, box.y + box.h)
       ) {
         return i;
       }
@@ -319,10 +352,13 @@ canvas.addEventListener('mousedown', e => {
         points: [...polygonPoints],
         fill: fillColor,
         border: borderColor,
-        lineWidth
+        lineWidth,
+        angle: 0,
+        componentType: 'desconocido'
       });
       polygonPoints = [];
       redrawAll();
+      updateShapesInfoTable();
     }
   }
 });
@@ -336,7 +372,7 @@ canvas.addEventListener('mousemove', e => {
 
     if (action === 'move') {
       if (s.points) {
-        s.points.forEach(p => { p.x += dx; p.y += dy });
+        s.points.forEach(p => { p.x += dx; p.y += dy; });
       } else {
         s.x += dx; s.y += dy;
       }
@@ -380,6 +416,7 @@ canvas.addEventListener('mousemove', e => {
 
     startX = x; startY = y;
     redrawAll();
+    updateShapesInfoTable();
     return;
   }
 
@@ -452,8 +489,11 @@ canvas.addEventListener('mouseup', e => {
       points: [...freehandPoints],
       strokeColor,
       lineWidth,
-      composite: currentTool === 'eraser' ? 'destination-out' : 'source-over'
+      composite: currentTool === 'eraser' ? 'destination-out' : 'source-over',
+      componentType: 'desconocido'
     });
+    redrawAll();
+    updateShapesInfoTable();
   }
 
   if (isDrawing && currentTool === 'path') {
@@ -464,9 +504,12 @@ canvas.addEventListener('mouseup', e => {
       points: [...pathPoints],
       fill: fillColor,
       border: borderColor,
-      lineWidth
+      lineWidth,
+      angle: 0,
+      componentType: 'desconocido'
     });
     redrawAll();
+    updateShapesInfoTable();
   }
 
   if (isDrawing && (currentTool === 'rectangle' || currentTool === 'ellipse')) {
@@ -479,8 +522,11 @@ canvas.addEventListener('mouseup', e => {
       fill: fillColor,
       border: borderColor,
       lineWidth,
-      angle: 0
+      angle: 0,
+      componentType: 'desconocido'
     });
+    redrawAll();
+    updateShapesInfoTable();
   }
 
   isDrawing      = false;
@@ -545,16 +591,15 @@ function redrawAll() {
       ctx.stroke();
 
     } else if (s.type === 'polygon' || s.type === 'path') {
-        ctx.fillStyle   = s.fill;
-        ctx.strokeStyle = s.border;
-        ctx.lineWidth   = s.lineWidth;
-        ctx.beginPath();
-        ctx.moveTo(s.points[0].x, s.points[0].y);
-        s.points.forEach(p => ctx.lineTo(p.x, p.y));
-        // Forzamos siempre el cierre de contorno, incluso en paths libres:
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
+      ctx.fillStyle   = s.fill;
+      ctx.strokeStyle = s.border;
+      ctx.lineWidth   = s.lineWidth;
+      ctx.beginPath();
+      ctx.moveTo(s.points[0].x, s.points[0].y);
+      s.points.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     }
 
     // Si está seleccionado, dibujar bounding box y handles
@@ -618,3 +663,66 @@ document.getElementById('play-photons-btn').addEventListener('click', () => {
 
   redrawAll();
 });
+
+// ---------------------------
+//  FUNCIONES DE LA TABLA
+// ---------------------------
+function updateShapesInfoTable() {
+  const tbody = document
+    .getElementById('shapes-info-table')
+    .querySelector('tbody');
+  
+  // Vaciar contenido previo
+  tbody.innerHTML = '';
+
+  shapes.forEach((s, index) => {
+    const tr = document.createElement('tr');
+
+    // --- Columna índice ---
+    const tdIndex = document.createElement('td');
+    tdIndex.textContent = index + 1;
+    tr.appendChild(tdIndex);
+
+    // --- Columna tipo de componente (select) ---
+    const tdType = document.createElement('td');
+    const select = document.createElement('select');
+    // Llenar opciones:
+    COMPONENT_TYPES.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt;
+      option.textContent = opt;
+      select.appendChild(option);
+    });
+    // Establecer valor actual (o 'desconocido' si no existe)
+    select.value = s.componentType || 'desconocido';
+    // Listener para actualizar shapes[index].componentType al cambiar:
+    select.addEventListener('change', () => {
+      shapes[index].componentType = select.value;
+      // No necesitamos redrawAll() porque el componente no afecta al canvas
+    });
+    tdType.appendChild(select);
+    tr.appendChild(tdType);
+
+    // --- Columna color de relleno (input[type="color"]) ---
+    const tdColor = document.createElement('td');
+    if (s.fill !== undefined) {
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = s.fill;
+      // Cuando cambie, actualizamos shapes[index].fill y redibujamos
+      colorInput.addEventListener('input', () => {
+        shapes[index].fill = colorInput.value;
+        redrawAll();
+      });
+      tdColor.appendChild(colorInput);
+    } else {
+      // Si no tiene fill (freehand, etc.), mostramos “—”
+      const dash = document.createElement('span');
+      dash.textContent = '—';
+      tdColor.appendChild(dash);
+    }
+    tr.appendChild(tdColor);
+
+    tbody.appendChild(tr);
+  });
+}

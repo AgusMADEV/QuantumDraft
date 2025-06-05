@@ -9,6 +9,7 @@
 <body>
   <h1>Fotomultiplicador 2D | QuantumDraft</h1>
   <div class="main-container">
+    <!-- Panel de controles (columna izquierda) -->
     <div class="controls">
       <button data-tool="pencil" class="tool-btn">Lápiz</button>
       <button data-tool="eraser" class="tool-btn" id="eraser-btn">Borrador</button>
@@ -44,7 +45,7 @@
           <input type="number" id="select-height" min="1" value="0">
         </div>
       </div>
-      <!-- NUEVO: controles de fotones -->
+      <!-- Controles de fotones -->
       <div class="photon-controls" style="margin-top: 10px;">
         <label for="photon-count">Número de fotones:</label>
         <input 
@@ -61,10 +62,30 @@
       <input type="text" id="drawing-name" placeholder="Nombre del dibujo" />
       <button id="save-btn">Guardar Dibujo</button>
     </div>
+
+    <!-- Contenedor del Canvas (columna central) -->
     <div class="canvas-container">
       <canvas id="drawing-canvas"></canvas>
     </div>
+
+    <!-- Contenedor de la tabla (columna derecha) -->
+    <div id="info-table-container">
+      <h2>Elementos Dibujados</h2>
+      <table id="shapes-info-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tipo</th>
+            <th>Relleno</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Se rellenará dinámicamente vía JavaScript -->
+        </tbody>
+      </table>
+    </div>
   </div>
+
   <script src="funciones.js"></script>
 </body>
 </html>
