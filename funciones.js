@@ -19,11 +19,12 @@ let selectedShape = null,
     action = null,
     handleIndex = -1;
 
+// Referencias a elementos del DOM
 const selectParams = document.getElementById('selection-params');
 const inputWidth    = document.getElementById('select-width');
 const inputHeight   = document.getElementById('select-height');
+const deleteBtn     = document.getElementById('delete-btn');
 
-// Lista de opciones para “Tipo de componente”
 const COMPONENT_TYPES = [
   'dinodo',
   'photocathode',
@@ -33,14 +34,13 @@ const COMPONENT_TYPES = [
   'otro'
 ];
 
-// --- Clase Photon (POO) ---
+// --- Clase Photon ---
 class Photon {
   constructor(x, y) {
     this.x = x;
     this.y = y;
     this.radius = 5;
     this.color = 'yellow';
-    // Futuras propiedades: velocidad, energía, etc.
   }
 
   draw(ctx) {
@@ -67,11 +67,17 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// --- Cálculo de bounding box ---
+// --- Bounding box (normalizado) ---
 function getBoundingBox(s) {
   if (s.type === 'rectangle' || s.type === 'ellipse') {
-    return { x: s.x, y: s.y, w: s.w, h: s.h };
+    // Normalizamos coordenadas para que w y h siempre sean positivos
+    const x1 = Math.min(s.x, s.x + s.w);
+    const y1 = Math.min(s.y, s.y + s.h);
+    const w  = Math.abs(s.w);
+    const h  = Math.abs(s.h);
+    return { x: x1, y: y1, w, h };
   } else {
+    // Para polígono, path o freehand, calculamos el envolvente de puntos
     const xs = s.points.map(p => p.x),
           ys = s.points.map(p => p.y);
     return {
@@ -163,13 +169,20 @@ function drawRotateHandle(box, angle = 0) {
 // --- Actualizar UI de selección ---
 function updateSelectionUI() {
   const s = shapes[selectedShape];
-  if (!s) return;
+  if (!s) {
+    document.getElementById('shape-params').style.display = 'none';
+    document.getElementById('global-color').style.display = 'block';
+    selectParams.style.display = 'none';
+    deleteBtn.disabled = true;
+    return;
+  }
+
   if (['rectangle','ellipse','polygon','path'].includes(s.type)) {
     document.getElementById('shape-params').style.display = 'flex';
     document.getElementById('global-color').style.display = 'none';
+    selectParams.style.display = 'block';
     document.getElementById('shape-fill').value   = s.fill   || '#000000';
     document.getElementById('shape-border').value = s.border || '#000000';
-    selectParams.style.display = 'block';
     inputWidth.value  = Math.abs(s.w) || 0;
     inputHeight.value = Math.abs(s.h) || 0;
   } else {
@@ -179,6 +192,7 @@ function updateSelectionUI() {
     document.getElementById('color-picker').value = s.strokeColor || '#000000';
     document.getElementById('size-slider').value  = s.lineWidth   || 5;
   }
+  deleteBtn.disabled = false;
 }
 
 // --- Listeners de controles de color y grosor ---
@@ -232,6 +246,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
   selectParams.style.display = 'none';
   redrawAll();
   updateShapesInfoTable();
+  deleteBtn.disabled = true;
 });
 
 // --- Botones de selección de herramienta ---
@@ -240,6 +255,16 @@ document.querySelectorAll('.tool-btn').forEach(btn => {
     currentTool = btn.dataset.tool;
     document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+
+    // Mostrar u ocultar botón “Eliminar Selección”
+    if (currentTool === 'select') {
+      deleteBtn.style.display = 'inline-block';
+    } else {
+      deleteBtn.style.display = 'none';
+      selectedShape = null;
+      updateSelectionUI();
+    }
+
     // Mostrar/ocultar paneles según herramienta
     if (['rectangle','ellipse','polygon','path'].includes(currentTool)) {
       document.getElementById('shape-params').style.display = 'flex';
@@ -254,7 +279,7 @@ document.querySelectorAll('.tool-btn').forEach(btn => {
       document.getElementById('global-color').style.display = 'block';
       selectParams.style.display = 'none';
     }
-    if (currentTool !== 'select') selectedShape = null;
+
     redrawAll();
   });
 });
@@ -286,19 +311,19 @@ function hitTest(x, y) {
       const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
       const p = unrotatePoint(x, y, cx, cy, s.angle);
       if (
-        p.x >= Math.min(box.x, box.x + box.w) &&
-        p.x <= Math.max(box.x, box.x + box.w) &&
-        p.y >= Math.min(box.y, box.y + box.h) &&
-        p.y <= Math.max(box.y, box.y + box.h)
+        p.x >= box.x &&
+        p.x <= box.x + box.w &&
+        p.y >= box.y &&
+        p.y <= box.y + box.h
       ) {
         return i;
       }
     } else {
       if (
-        x >= Math.min(box.x, box.x + box.w) &&
-        x <= Math.max(box.x, box.x + box.w) &&
-        y >= Math.min(box.y, box.y + box.h) &&
-        y <= Math.max(box.y, box.y + box.h)
+        x >= box.x &&
+        x <= box.x + box.w &&
+        y >= box.y &&
+        y <= box.y + box.h
       ) {
         return i;
       }
@@ -314,8 +339,9 @@ canvas.addEventListener('mousedown', e => {
   startY = lastY = y;
 
   if (currentTool === 'select') {
-    selectedShape = hitTest(x, y);
-    if (selectedShape != null) {
+    const idx = hitTest(x, y);
+    if (idx != null) {
+      selectedShape = idx;
       updateSelectionUI();
       const s = shapes[selectedShape];
       const box = getBoundingBox(s);
@@ -324,6 +350,12 @@ canvas.addEventListener('mousedown', e => {
       if (handleIndex >= 0) action = 'resize';
       else if (isOnRotateHandle(x, y, box, angle)) action = 'rotate';
       else action = 'move';
+    } else {
+      // Clic en área vacía → deseleccionar todo
+      selectedShape = null;
+      action        = null;
+      handleIndex   = -1;
+      updateSelectionUI();
     }
     redrawAll();
     return;
@@ -393,8 +425,16 @@ canvas.addEventListener('mousemove', e => {
           y: cy + (p.y - cy) * scaleY
         }));
       } else {
-        s.w *= scaleX; s.h *= scaleY;
-        s.x = cx - s.w / 2; s.y = cy - s.h / 2;
+        // Para mantener la normalización, recalculamos s.x y s.y
+        const centerX = cx, centerY = cy;
+        const originalW = box.w, originalH = box.h;
+        // Convertimos nuevo ancho/alto a signo original:
+        const signW = s.w < 0 ? -1 : 1;
+        const signH = s.h < 0 ? -1 : 1;
+        s.w = signW * newW;
+        s.h = signH * newH;
+        s.x = centerX - (s.w) / 2;
+        s.y = centerY - (s.h) / 2;
       }
       inputWidth.value  = Math.abs(s.w);
       inputHeight.value = Math.abs(s.h);
@@ -438,10 +478,7 @@ canvas.addEventListener('mousemove', e => {
     lastX = x; lastY = y;
 
   } else if (currentTool === 'path') {
-    // Añadimos el nuevo punto al arreglo
     pathPoints.push({ x, y });
-
-    // Redibujamos todo y luego la previsualización de la ruta cerrada
     redrawAll();
     ctx.save();
       ctx.fillStyle   = fillColor;
@@ -456,7 +493,6 @@ canvas.addEventListener('mousemove', e => {
     ctx.restore();
 
   } else {
-    // Preview rect / ellipse
     redrawAll();
     ctx.save();
       ctx.fillStyle   = fillColor;
@@ -497,7 +533,6 @@ canvas.addEventListener('mouseup', e => {
   }
 
   if (isDrawing && currentTool === 'path') {
-    // Añadimos el punto final para que no se pierda el último trazo
     pathPoints.push({ x, y });
     shapes.push({
       type: 'path',
@@ -615,7 +650,7 @@ function redrawAll() {
     ctx.restore();
   });
 
-  // 2) Dibujar fotones (array photons)
+  // 2) Dibujar fotones
   photons.forEach(p => {
     p.draw(ctx);
   });
@@ -652,7 +687,6 @@ document.getElementById('play-photons-btn').addEventListener('click', () => {
   if (n > 5) n = 5;
 
   photons = [];
-
   for (let i = 0; i < n; i++) {
     const margin = 10;
     const px = Math.random() * (canvas.width - 2 * margin) + margin;
@@ -660,8 +694,18 @@ document.getElementById('play-photons-btn').addEventListener('click', () => {
     const p = new Photon(px, py);
     photons.push(p);
   }
-
   redrawAll();
+});
+
+// --- Listener para “Eliminar Selección” ---
+deleteBtn.addEventListener('click', () => {
+  if (selectedShape != null && shapes[selectedShape]) {
+    shapes.splice(selectedShape, 1);
+    selectedShape = null;
+    redrawAll();
+    updateShapesInfoTable();
+    deleteBtn.disabled = true;
+  }
 });
 
 // ---------------------------
@@ -672,56 +716,68 @@ function updateShapesInfoTable() {
     .getElementById('shapes-info-table')
     .querySelector('tbody');
   
-  // Vaciar contenido previo
   tbody.innerHTML = '';
 
   shapes.forEach((s, index) => {
     const tr = document.createElement('tr');
 
-    // --- Columna índice ---
+    // Columna índice
     const tdIndex = document.createElement('td');
     tdIndex.textContent = index + 1;
     tr.appendChild(tdIndex);
 
-    // --- Columna tipo de componente (select) ---
+    // Columna tipo (select)
     const tdType = document.createElement('td');
     const select = document.createElement('select');
-    // Llenar opciones:
     COMPONENT_TYPES.forEach(opt => {
       const option = document.createElement('option');
       option.value = opt;
       option.textContent = opt;
       select.appendChild(option);
     });
-    // Establecer valor actual (o 'desconocido' si no existe)
     select.value = s.componentType || 'desconocido';
-    // Listener para actualizar shapes[index].componentType al cambiar:
     select.addEventListener('change', () => {
       shapes[index].componentType = select.value;
-      // No necesitamos redrawAll() porque el componente no afecta al canvas
     });
     tdType.appendChild(select);
     tr.appendChild(tdType);
 
-    // --- Columna color de relleno (input[type="color"]) ---
+    // Columna color de relleno
     const tdColor = document.createElement('td');
     if (s.fill !== undefined) {
       const colorInput = document.createElement('input');
       colorInput.type = 'color';
       colorInput.value = s.fill;
-      // Cuando cambie, actualizamos shapes[index].fill y redibujamos
       colorInput.addEventListener('input', () => {
         shapes[index].fill = colorInput.value;
         redrawAll();
       });
       tdColor.appendChild(colorInput);
     } else {
-      // Si no tiene fill (freehand, etc.), mostramos “—”
       const dash = document.createElement('span');
       dash.textContent = '—';
       tdColor.appendChild(dash);
     }
     tr.appendChild(tdColor);
+
+    // Columna “Eliminar” (botón)
+    const tdDel = document.createElement('td');
+    const delBtnRow = document.createElement('button');
+    delBtnRow.textContent = 'Eliminar';
+    delBtnRow.style.padding = '4px 8px';
+    delBtnRow.style.fontSize = '0.9rem';
+    delBtnRow.addEventListener('click', () => {
+      // Si esa fila estaba seleccionada en el canvas, deseleccionar
+      if (selectedShape === index) {
+        selectedShape = null;
+        deleteBtn.disabled = true;
+      }
+      shapes.splice(index, 1);
+      redrawAll();
+      updateShapesInfoTable();
+    });
+    tdDel.appendChild(delBtnRow);
+    tr.appendChild(tdDel);
 
     tbody.appendChild(tr);
   });

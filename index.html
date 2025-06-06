@@ -18,7 +18,8 @@
       <button data-tool="polygon" class="tool-btn">Polígono</button>
       <button data-tool="path" class="tool-btn">Path libre</button>
       <button data-tool="select" class="tool-btn">Seleccionar</button>
-
+      <!-- “Eliminar Selección” solo visible con herramienta select -->
+      <button id="delete-btn" style="display: none;" disabled>Eliminar Selección</button>
       <div id="shape-params" class="tool-group" style="display:none;">
         <div class="shape-input">
           <label for="shape-fill">Color Relleno:</label>
@@ -59,6 +60,7 @@
         <button id="play-photons-btn">Play</button>
       </div>
       <button id="clear-btn">Limpiar Canvas</button>
+
       <input type="text" id="drawing-name" placeholder="Nombre del dibujo" />
       <button id="save-btn">Guardar Dibujo</button>
     </div>
@@ -77,6 +79,7 @@
             <th>#</th>
             <th>Tipo</th>
             <th>Relleno</th>
+            <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
