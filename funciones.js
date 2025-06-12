@@ -39,11 +39,24 @@ class Photon {
   constructor(x, y) {
     this.x = x;
     this.y = y;
+    this.vx = 0; 
+    this.vy = 0;    // velocidad
     this.radius = 5;
     this.color = 'yellow';
+    this.path = [{ x, y }];  // almacena el recorrido
   }
 
   draw(ctx) {
+    // dibuja trayectoria
+    ctx.save();
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255,255,0,0.3)';
+    ctx.moveTo(this.path[0].x, this.path[0].y);
+    this.path.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+    ctx.restore();
+
+    // dibuja fotón
     ctx.save();
     ctx.beginPath();
     ctx.fillStyle = this.color;
@@ -55,7 +68,57 @@ class Photon {
     ctx.restore();
   }
 }
+function updatePhoton(p, dt) {
+  const G = 1000;
+  // Atracción eléctrica
+  shapes.forEach(s => {
+    if (s.voltage > 0) {
+      const box = getBoundingBox(s);
+      const cx = box.x + box.w/2, cy = box.y + box.h/2;
+      let dx = cx - p.x, dy = cy - p.y;
+      const dist2 = dx*dx + dy*dy;
+      if (dist2 < 1) return;
+      const F = (G * s.voltage) / dist2;
+      const dist = Math.sqrt(dist2);
+      p.vx += F * dx/dist * dt;
+      p.vy += F * dy/dist * dt;
+    }
+  });
 
+  // Movimiento
+  p.x += p.vx * dt;
+  p.y += p.vy * dt;
+
+  // Colisión con shapes
+  shapes.forEach(s => {
+    const box = getBoundingBox(s);
+    // comprobamos rebote si entra en bounding box
+    if (
+      p.x + p.radius > box.x && p.x - p.radius < box.x+box.w &&
+      p.y + p.radius > box.y && p.y - p.radius < box.y+box.h
+    ) {
+      // reflejo simple según cara de colisión
+      // si chocó horizontalmente:
+      if (p.x < box.x || p.x > box.x+box.w) p.vx *= -1;
+      else p.vy *= -1;
+
+      // Ganancia de electrones = k del shape
+      const electrons = s.k;
+      console.log(`Photon collided with ${s.componentType}, generated ${electrons} e⁻`);
+    }
+  });
+
+  // Guardar trayectoria
+  p.path.push({ x: p.x, y: p.y });
+}
+
+let animId = null;
+function animatePhotons() {
+  const dt = 0.016;
+  photons.forEach(p => updatePhoton(p, dt));
+  redrawAll();
+  animId = requestAnimationFrame(animatePhotons);
+}
 // --- Ajuste del canvas al contenedor ---
 function resizeCanvas() {
   const c = canvas.parentElement;
@@ -386,7 +449,9 @@ canvas.addEventListener('mousedown', e => {
         border: borderColor,
         lineWidth,
         angle: 0,
-        componentType: 'desconocido'
+        componentType: 'desconocido',
+        voltage: 0,
+        k: 1,                  // por defecto 1
       });
       polygonPoints = [];
       redrawAll();
@@ -526,7 +591,9 @@ canvas.addEventListener('mouseup', e => {
       strokeColor,
       lineWidth,
       composite: currentTool === 'eraser' ? 'destination-out' : 'source-over',
-      componentType: 'desconocido'
+      componentType: 'desconocido',
+      voltage: 0,
+      k: 1,                  // por defecto 1
     });
     redrawAll();
     updateShapesInfoTable();
@@ -541,7 +608,9 @@ canvas.addEventListener('mouseup', e => {
       border: borderColor,
       lineWidth,
       angle: 0,
-      componentType: 'desconocido'
+      componentType: 'desconocido',
+      voltage: 0,
+      k: 1,                  // por defecto 1
     });
     redrawAll();
     updateShapesInfoTable();
@@ -558,7 +627,9 @@ canvas.addEventListener('mouseup', e => {
       border: borderColor,
       lineWidth,
       angle: 0,
-      componentType: 'desconocido'
+      componentType: 'desconocido',
+      voltage: 0,
+      k: 1,                  // por defecto 1
     });
     redrawAll();
     updateShapesInfoTable();
@@ -681,20 +752,25 @@ document.getElementById('save-btn').addEventListener('click', () => {
 
 // --- Listener para “Play”: crear fotones ---
 document.getElementById('play-photons-btn').addEventListener('click', () => {
+  // 1) Parar animación previa, si existía
+  if (animId) cancelAnimationFrame(animId);
+
+  // 2) Crear los fotones según el número indicado
   const countInput = document.getElementById('photon-count');
   let n = parseInt(countInput.value, 10);
   if (isNaN(n) || n < 0) n = 0;
   if (n > 5) n = 5;
 
   photons = [];
+  const margin = 10;
   for (let i = 0; i < n; i++) {
-    const margin = 10;
     const px = Math.random() * (canvas.width - 2 * margin) + margin;
     const py = Math.random() * (canvas.height - 2 * margin) + margin;
-    const p = new Photon(px, py);
-    photons.push(p);
+    photons.push(new Photon(px, py));
   }
-  redrawAll();
+
+  // 3) Iniciar el bucle de animación
+  animatePhotons();
 });
 
 // --- Listener para “Eliminar Selección” ---
@@ -742,7 +818,43 @@ function updateShapesInfoTable() {
     tdType.appendChild(select);
     tr.appendChild(tdType);
 
+    // Columna voltaje
+
+    const tdVolt = document.createElement('td');
+    const voltInput = document.createElement('input');
+    voltInput.type = 'number';
+    voltInput.min = '0';
+    voltInput.step = '0.1';
+    voltInput.value = shapes[index].voltage || 0;
+    voltInput.style.width = '60px';
+    voltInput.addEventListener('input', () => {
+      shapes[index].voltage = parseFloat(voltInput.value) || 0;
+    });
+    tdVolt.appendChild(voltInput);
+    tr.appendChild(tdVolt);
+
+    // Columna K (sólo editable si es dinodo)
+
+    const tdK = document.createElement('td');
+    const kInput = document.createElement('input');
+    kInput.type = 'number';
+    kInput.min = '1';
+    kInput.step = '1';
+    kInput.value = shapes[index].k;
+    kInput.style.width = '50px';
+    kInput.disabled = select.value !== 'dinodo';
+    select.addEventListener('change', () => {
+      kInput.disabled = select.value !== 'dinodo';
+      if (select.value !== 'dinodo') shapes[index].k = 1;
+    });
+    kInput.addEventListener('input', () => {
+      shapes[index].k = parseInt(kInput.value, 10) || 1;
+    });
+    tdK.appendChild(kInput);
+    tr.appendChild(tdK);
+
     // Columna color de relleno
+
     const tdColor = document.createElement('td');
     if (s.fill !== undefined) {
       const colorInput = document.createElement('input');
