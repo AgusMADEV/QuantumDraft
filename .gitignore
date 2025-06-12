@@ -1,3 +1,76 @@
-/saved_drawings
-Screenshot at 2025-05-27 11-42-54.png
-agustin.txt
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Archivos y carpetas de IDE/editores
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.vs/
+*.swp
+*.swo
+.editorconfig
+
+# Carpetas de node/npm
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+.yarn-integrity
+.npm
+.node_repl_history
+
+# Archivos de entorno y configuración local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de caché y logs
+logs/
+*.log
+.cache/
+.sass-cache/
+.coverage/
+.nyc_output/
+jest-coverage/
+
+# Archivos de construcción/build
+dist/
+build/
+tmp/
+temp/
+out/
+public/build/
+
+# Archivos específicos de MAMP
+# Comentado por ahora, ya que no necesitas ignorar los archivos en tu entorno de desarrollo
+# /Applications/MAMP/htdocs/
+
+# Archivos específicos del proyecto
+# cypress/screenshots/ # Descomentar si no quieres incluir capturas de Cypress
+# cypress/videos/
+# cypress/downloads/
+
+# Archivos de prueba o temporales
+*~
+*.bak
+*.tmp
+*.temp
+
+# Archivos grandes (descomentar según sea necesario)
+# *.zip
+# *.tar.gz
+# *.rar
+# *.pdf
+
+# Archivos específicos para exclusión
+error-test.html
+error-test2.html
+button-test.html

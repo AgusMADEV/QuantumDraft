@@ -1,94 +1,554 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fotomultiplicador 2D | QuantumDraft</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumDraft - Simulador de Fotomultiplicador</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter (científica y moderna) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome para íconos científicos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nuestros estilos personalizados -->
+    <link href="styles.css" rel="stylesheet">
+    <!-- Integración de librerías científicas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.3.0/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-  <h1>Fotomultiplicador 2D | QuantumDraft</h1>
-  <div class="main-container">
-    <!-- Panel de controles (columna izquierda) -->
-    <div class="controls">
-      <button data-tool="pencil" class="tool-btn">Lápiz</button>
-      <button data-tool="eraser" class="tool-btn" id="eraser-btn">Borrador</button>
-      <button data-tool="rectangle" class="tool-btn">Rectángulo</button>
-      <button data-tool="ellipse" class="tool-btn">Elipse</button>
-      <button data-tool="polygon" class="tool-btn">Polígono</button>
-      <button data-tool="path" class="tool-btn">Path libre</button>
-      <button data-tool="select" class="tool-btn">Seleccionar</button>
-      <!-- “Eliminar Selección” solo visible con herramienta select -->
-      <button id="delete-btn" style="display: none;" disabled>Eliminar Selección</button>
-      <div id="shape-params" class="tool-group" style="display:none;">
-        <div class="shape-input">
-          <label for="shape-fill">Color Relleno:</label>
-          <input type="color" id="shape-fill" value="#ffffff">
-        </div>
-        <div class="shape-input">
-          <label for="shape-border">Color Borde:</label>
-          <input type="color" id="shape-border" value="#000000">
-        </div>
-      </div>
-      <div id="global-color" class="tool-group">
-        <label for="color-picker">Color / Trazado:</label>
-        <input type="color" id="color-picker" value="#000000" />
-      </div>
-      <label for="size-slider">Tamaño / Grosor:</label>
-      <input type="range" id="size-slider" min="1" max="50" value="5" />
-      <div id="selection-params" class="tool-group" style="display:none;">
-        <div class="shape-input">
-          <label for="select-width">Ancho:</label>
-          <input type="number" id="select-width" min="1" value="0">
-        </div>
-        <div class="shape-input">
-          <label for="select-height">Alto:</label>
-          <input type="number" id="select-height" min="1" value="0">
-        </div>
-      </div>
-      <!-- Controles de fotones -->
-      <div class="photon-controls" style="margin-top: 10px;">
-        <label for="photon-count">Número de fotones:</label>
-        <input 
-          id="photon-count" 
-          type="number" 
-          min="0" 
-          max="5" 
-          value="0" 
-          style="width: 60px; margin: 0 8px;"
-        />
-        <button id="play-photons-btn">Play</button>
-      </div>
-      <button id="clear-btn">Limpiar Canvas</button>
+<body class="quantum-theme">
+    <!-- Header científico profesional -->
+    <header class="quantum-header">
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <div class="navbar-brand d-flex align-items-center">
+                    <div class="logo-container">
+                        <i class="fas fa-atom logo-icon"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h1 class="brand-title">QuantumDraft</h1>
+                        <p class="brand-subtitle">Simulador de Fotomultiplicador</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="status-indicators me-3">
+                        <span class="status-badge" id="simulationStatus">
+                            <i class="fas fa-circle status-dot"></i>
+                            Listo
+                        </span>
+                    </div>
+                    <div class="d-none d-md-block">
+                        <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#helpModal">
+                            <i class="fas fa-question-circle me-1"></i>Ayuda
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
 
-      <input type="text" id="drawing-name" placeholder="Nombre del dibujo" />
-      <button id="save-btn">Guardar Dibujo</button>
+    <main class="quantum-main">
+        <div class="container-fluid">
+            <!-- Área principal de trabajo -->
+            <div class="row g-4">
+                <!-- Columna izquierda: Simulación y gráficas -->
+                <div class="col-xl-8">
+                    <!-- Tabs para cambiar entre vistas -->
+                    <ul class="nav nav-tabs mb-3" id="viewTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="simulation-tab" data-bs-toggle="tab" data-bs-target="#simulation-panel" type="button" role="tab" aria-controls="simulation-panel" aria-selected="true">
+                                <i class="fas fa-microscope me-1"></i>Simulación
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts-panel" type="button" role="tab" aria-controls="charts-panel" aria-selected="false">
+                                <i class="fas fa-chart-line me-1"></i>Datos
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Contenido de las tabs -->
+                    <div class="tab-content" id="viewTabsContent">
+                        <!-- Panel de simulación -->
+                        <div class="tab-pane fade show active" id="simulation-panel" role="tabpanel" aria-labelledby="simulation-tab">
+                            <section class="simulation-panel">
+                                <div class="panel-header d-flex justify-content-between align-items-center mb-2">
+                                    <h3 class="panel-title">
+                                        <i class="fas fa-microscope me-2"></i>
+                                        Área de Simulación
+                                    </h3>
+                                    <div class="panel-controls d-flex">
+                                        <button id="playButton" class="btn btn-success btn-sm me-1">
+                                            <i class="fas fa-play me-1"></i><span class="d-none d-sm-inline">Iniciar</span>
+                                        </button>
+                                        <button id="resetButton" class="btn btn-outline-danger btn-sm me-1">
+                                            <i class="fas fa-stop me-1"></i><span class="d-none d-sm-inline">Reset</span>
+                                        </button>
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="visualizationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fas fa-eye me-1"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="visualizationDropdown">
+                                                <li>
+                                                    <button class="dropdown-item" data-action="toggle-trajectories">
+                                                        <i class="fas fa-route me-1"></i>Mostrar Trayectorias
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button class="dropdown-item" data-action="toggle-field">
+                                                        <i class="fas fa-bolt me-1"></i>Mostrar Campo Eléctrico
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button class="dropdown-item" data-action="simulate-physics">
+                                                        <i class="fas fa-atom me-1"></i>Simular Física (Boris)
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="canvas-container position-relative">
+                                    <canvas id="simulationCanvas" width="800" height="400"></canvas>
+                                    <div id="modeIndicator" class="mode-indicator"></div>
+                                    <div class="canvas-overlay">
+                                        <div class="measurement-info">
+                                            <span id="canvasCoords" class="coords-display">X: 0, Y: 0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- Panel de gráficas -->
+                        <div class="tab-pane fade" id="charts-panel" role="tabpanel" aria-labelledby="charts-tab">
+                            <section class="charts-panel">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="chart-card">
+                                            <div class="chart-header">
+                                                <h5 class="chart-title">
+                                                    <i class="fas fa-chart-line me-2"></i>
+                                                    Corriente vs Tiempo
+                                                </h5>
+                                                <span class="chart-units">e⁻/s</span>
+                                            </div>
+                                            <div class="chart-body">
+                                                <canvas id="currentChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="chart-card">
+                                            <div class="chart-header">
+                                                <h5 class="chart-title">
+                                                    <i class="fas fa-chart-scatter me-2"></i>
+                                                    Distribución Espacial
+                                                </h5>
+                                                <span class="chart-units">Impactos</span>
+                                            </div>
+                                            <div class="chart-body">
+                                                <canvas id="impactChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 text-end mt-2">
+                                        <button class="btn btn-sm btn-outline-success" id="exportDataButton">
+                                            <i class="fas fa-file-export me-1"></i>Exportar datos CSV
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+
+                    <!-- Panel de información en tiempo real -->
+                    <section class="info-panel mt-3">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <div class="metric-content">
+                                    <div class="metric-label">Energía Total</div>
+                                    <div class="metric-value">
+                                        <span id="totalEnergy">0</span>
+                                        <span class="metric-unit">eV</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">
+                                    <i class="fas fa-atom"></i>
+                                </div>
+                                <div class="metric-content">
+                                    <div class="metric-label">Electrones</div>
+                                    <div class="metric-value">
+                                        <span id="electronCount">0</span>
+                                        <span class="metric-unit">e⁻</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                </div>
+                                <div class="metric-content">
+                                    <div class="metric-label">Ganancia Media</div>
+                                    <div class="metric-value">
+                                        <span id="averageGain">0</span>
+                                        <span class="metric-unit">x</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Columna derecha: Controles y parámetros -->
+                <div class="col-xl-4">
+                    <!-- Panel de parámetros de simulación -->
+                    <section class="controls-panel">
+                        <div class="panel-header d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="panel-title">
+                                <i class="fas fa-sliders-h me-2"></i>
+                                Parámetros de Simulación
+                            </h3>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#controlsCollapse" aria-expanded="true" aria-controls="controlsCollapse">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="collapse show" id="controlsCollapse">
+                            <div class="controls controls-grid">
+                                <div class="parameter-group">
+                                    <label for="deltatInput" class="parameter-label">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Δt (s)
+                                    </label>
+                                    <input id="deltatInput" type="number" class="form-control form-control-sm parameter-input" value="0.1" step="0.01">
+                                </div>
+                                
+                                <div class="parameter-group">
+                                    <label for="photonCountInput" class="parameter-label">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        Fotones iniciales
+                                    </label>
+                                    <input id="photonCountInput" type="number" class="form-control form-control-sm parameter-input" value="10" min="1">
+                                </div>
+                                
+                                <div class="parameter-group">
+                                    <label for="seedInput" class="parameter-label">
+                                        <i class="fas fa-random me-1"></i>
+                                        Semilla aleatoria
+                                    </label>
+                                    <input id="seedInput" type="text" class="form-control form-control-sm parameter-input" placeholder="opcional">
+                                </div>
+
+                                <div class="separator-line"></div>
+
+                                <div class="parameter-group">
+                                    <label class="parameter-label">
+                                        <i class="fas fa-adjust me-1"></i>
+                                        Control de Dinodos
+                                    </label>
+                                    <div class="btn-group w-100" role="group">
+                                        <button class="btn btn-outline-secondary btn-sm" data-action="decrease-dynodes">
+                                            <i class="fas fa-minus me-1"></i>Quitar
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" data-action="add-dinode">
+                                            <i class="fas fa-plus-circle me-1"></i>Añadir
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" data-action="increase-dynodes">
+                                            <i class="fas fa-plus me-1"></i>Agregar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="preset-group">
+                                    <label for="presetSelect" class="parameter-label">
+                                        <i class="fas fa-cog me-1"></i>
+                                        Configuraciones
+                                    </label>
+                                    <div class="input-group">
+                                        <select id="presetSelect" class="form-select form-select-sm">
+                                            <option value="vacío">Vacío</option>
+                                            <option value="variacionVoltajes">Variación Voltajes</option>
+                                            <option value="compararModelos">Comparar Modelos</option>
+                                        </select>
+                                        <button id="loadPresetButton" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-upload"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="component-toggles">
+                                    <div class="toggle-group">
+                                        <input type="checkbox" id="gridCheckbox" class="form-check-input">
+                                        <label class="form-check-label" for="gridCheckbox">
+                                            <i class="fas fa-th me-1"></i>Grid
+                                        </label>
+                                    </div>
+                                    <div class="toggle-group">
+                                        <input type="checkbox" id="acceleratorCheckbox" class="form-check-input">
+                                        <label class="form-check-label" for="acceleratorCheckbox">
+                                            <i class="fas fa-fast-forward me-1"></i>Accelerator
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Botones de archivo -->
+                                <div class="file-actions">
+                                    <div class="btn-group w-100">
+                                        <label for="loadJsonInput" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-folder-open me-1"></i>Cargar
+                                        </label>
+                                        <input type="file" id="loadJsonInput" class="d-none" accept=".json,.txt">
+                                        <button id="exportJsonButton" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-download me-1"></i>Exportar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Herramientas de dibujo -->
+                    <section class="drawing-panel mt-4">
+                        <div class="panel-header d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="panel-title">
+                                <i class="fas fa-draw-polygon me-2"></i>
+                                Herramientas de Dibujo
+                            </h3>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#drawingCollapse" aria-expanded="true" aria-controls="drawingCollapse">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="collapse show" id="drawingCollapse">
+                            <div class="drawing-tools">
+                                <div class="tool-group">
+                                    <div class="tool-label">Modos</div>
+                                    <div class="btn-group tool-buttons w-100" role="group">
+                                        <button class="btn btn-outline-primary btn-sm" id="drawModeButton" title="Dibujo libre">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" id="lineModeButton" title="Líneas">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" id="rectangleModeButton" title="Rectángulos">
+                                            <i class="fas fa-square"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" id="circleModeButton" title="Círculos">
+                                            <i class="fas fa-circle"></i>
+                                        </button>
+                                        <button class="btn btn-outline-success btn-sm" data-action="simulation-mode" title="Modo simulación">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="tool-group">
+                                    <div class="tool-label">Pinceles</div>
+                                    <div class="btn-group tool-buttons w-100" role="group">
+                                        <button class="btn btn-outline-secondary btn-sm" id="brush1" title="Pincel fino">
+                                            <i class="fas fa-circle" style="font-size: 8px;"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" id="brush2" title="Pincel medio">
+                                            <i class="fas fa-circle" style="color:#ff0000; font-size: 12px;"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" id="brush3" title="Pincel grueso">
+                                            <i class="fas fa-circle" style="color:#0000ff; font-size: 16px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="tool-group">
+                                    <div class="tool-label">Tamaño</div>
+                                    <div class="brush-size-control d-flex align-items-center">
+                                        <input type="range" id="brushSize" class="form-range flex-grow-1" min="1" max="100" value="10">
+                                        <span class="size-display ms-2">10px</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="tool-group mt-2">
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-outline-secondary btn-sm" data-action="clear-drawing">
+                                            <i class="fas fa-trash-alt me-1"></i>Limpiar
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" data-action="convert-drawing">
+                                            <i class="fas fa-puzzle-piece me-1"></i>Convertir a Componente
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="keyboard-shortcuts mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-keyboard me-1"></i><strong>Atajos:</strong> D=Dibujo, L=Línea, R=Rectángulo, C=Círculo, S=Simulación, ESC=Limpiar, 1-3=Pinceles
+                                </small>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Tabla de componentes -->
+                    <section class="components-panel mt-4">
+                        <div class="panel-header d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="panel-title">
+                                <i class="fas fa-table me-2"></i>
+                                Componentes
+                            </h3>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#componentsCollapse" aria-expanded="true" aria-controls="componentsCollapse">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="collapse show" id="componentsCollapse">
+                            <div class="table-responsive">
+                                <table id="componentsTable" class="table table-hover table-sm components-table">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-tag me-1"></i>Tipo</th>
+                                            <th><i class="fas fa-crosshairs me-1"></i>X</th>
+                                            <th><i class="fas fa-crosshairs me-1"></i>Y</th>
+                                            <th><i class="fas fa-bolt me-1"></i>V</th>
+                                            <th><i class="fas fa-palette me-1"></i>Color</th>
+                                            <th><i class="fas fa-cogs me-1"></i>Modelo</th>
+                                            <th><i class="fas fa-tools me-1"></i>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Las filas se generarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pie de página científico con versión y créditos -->
+    <footer class="quantum-footer mt-4">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">QuantumDraft v2.0 - Simulador de Fotomultiplicador</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <i class="fas fa-code me-1"></i> con
+                        <i class="fas fa-atom mx-1"></i> por
+                        <span class="author-name">Agustín Alejandro Gonzalez</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de ayuda -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Ayuda del Simulador
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="accordion" id="helpAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    <i class="fas fa-book me-2"></i> Introducción al Fotomultiplicador
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <p>Un <strong>fotomultiplicador</strong> es un dispositivo que detecta y amplifica señales de luz extremadamente débiles mediante el efecto fotoeléctrico y la emisión secundaria de electrones.</p>
+                                    <p>Componentes principales:</p>
+                                    <ul>
+                                        <li><strong>Fotocátodo:</strong> Convierte fotones en electrones por efecto fotoeléctrico.</li>
+                                        <li><strong>Dinodos:</strong> Amplifican la señal mediante emisión secundaria de electrones.</li>
+                                        <li><strong>Ánodo:</strong> Recoge los electrones multiplicados para generar una señal eléctrica.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    <i class="fas fa-sliders-h me-2"></i> Controles de Simulación
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <dl class="row">
+                                        <dt class="col-sm-3"><i class="fas fa-play me-1"></i> Iniciar</dt>
+                                        <dd class="col-sm-9">Comienza la simulación con los parámetros configurados.</dd>
+                                        
+                                        <dt class="col-sm-3"><i class="fas fa-stop me-1"></i> Reset</dt>
+                                        <dd class="col-sm-9">Reinicia la simulación eliminando todas las partículas.</dd>
+                                        
+                                        <dt class="col-sm-3"><i class="fas fa-clock me-1"></i> Δt</dt>
+                                        <dd class="col-sm-9">Intervalo de tiempo para la simulación. Valores más pequeños dan mayor precisión.</dd>
+                                        
+                                        <dt class="col-sm-3"><i class="fas fa-lightbulb me-1"></i> Fotones</dt>
+                                        <dd class="col-sm-9">Cantidad de fotones emitidos al inicio de la simulación.</dd>
+                                        
+                                        <dt class="col-sm-3"><i class="fas fa-random me-1"></i> Semilla</dt>
+                                        <dd class="col-sm-9">Valor para reproducir exactamente la misma simulación (opcional).</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    <i class="fas fa-draw-polygon me-2"></i> Herramientas de Dibujo
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <p>Las herramientas de dibujo permiten crear geometrías personalizadas para los componentes:</p>
+                                    <ul>
+                                        <li><strong>Dibujo libre (D):</strong> Dibujar formas a mano alzada.</li>
+                                        <li><strong>Línea (L):</strong> Crear líneas rectas entre dos puntos.</li>
+                                        <li><strong>Rectángulo (R):</strong> Dibujar rectángulos arrastrando desde una esquina.</li>
+                                        <li><strong>Círculo (C):</strong> Crear círculos con el radio determinado por arrastre.</li>
+                                        <li><strong>Modo simulación (S):</strong> Volver al modo de simulación.</li>
+                                        <li><strong>Convertir a Componente:</strong> Transformar el dibujo en un componente físico.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Contenedor del Canvas (columna central) -->
-    <div class="canvas-container">
-      <canvas id="drawing-canvas"></canvas>
-    </div>
-
-    <!-- Contenedor de la tabla (columna derecha) -->
-    <div id="info-table-container">
-      <h2>Elementos Dibujados</h2>
-      <table id="shapes-info-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Tipo</th>
-            <th>Relleno</th>
-            <th>Eliminar</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Se rellenará dinámicamente vía JavaScript -->
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <script src="funciones.js"></script>
+    <!-- Scripts MVC -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Modelos -->
+    <script src="src/model/Particle.js"></script>
+    <script src="src/model/Component.js"></script>
+    <script src="src/model/PhysicsSimulator.js"></script>
+    <!-- Vistas -->
+    <script src="src/view/CanvasRenderer.js"></script>
+    <script src="src/view/ChartManager.js"></script>
+    <!-- Controladores -->
+    <script src="src/controller/SimulationController.js"></script>
+    <!-- Scripts de compatibilidad -->
+    <script src="physics.js"></script>
+    <!-- Script principal -->
+    <script src="app.js"></script>
 </body>
 </html>

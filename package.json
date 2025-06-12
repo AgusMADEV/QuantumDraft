@@ -1,0 +1,44 @@
+{
+  "name": "quantumdraft",
+  "version": "1.0.0",
+  "description": "Este proyecto provee un entorno interactivo para modelar y visualizar el comportamiento de un fotomultiplicador en dos dimensiones. Utiliza HTML5 Canvas, JavaScript puro y el algoritmo de Boris para simular el movimiento de electrones bajo campos eléctricos, además de ofrecer un modo de dibujo a mano libre para crear geometrías personalizadas.",
+  "main": "app.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "serve": "http-server . -p 8080",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "test": "jest",
+    "test:physics": "node tests/physics.test.js",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "chart.js": "^4.4.9",
+    "cypress": "^14.4.1",
+    "http-server": "^14.1.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "dependencies": {
+    "canvas": "^3.1.0",
+    "jsdom": "^26.1.0",
+    "mocha": "^11.6.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "moduleFileExtensions": [
+      "js"
+    ],
+    "testRegex": "tests/.*\\.jest\\.js$",
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "html"
+    ]
+  }
+}
