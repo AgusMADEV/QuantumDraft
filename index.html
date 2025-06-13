@@ -55,7 +55,11 @@
           <h4>Dinodos</h4>
           <div class="dynode-controls">
             <label>Número de dinodos:</label>
-            <input type="number" id="dynode-count" min="4" max="20" value="8">
+            <div class="counter-control">
+              <button id="decrease-dynodes">-</button>
+              <input type="number" id="dynode-count" min="4" max="20" value="8">
+              <button id="increase-dynodes">+</button>
+            </div>
             <button id="generate-dynodes">Generar Voltajes</button>
           </div>
           
@@ -99,6 +103,23 @@
           <div class="param-row">
             <label>s:</label>
             <input type="number" id="advanced-s" value="1.35" step="0.05">
+          </div>
+          <!-- Nuevos parámetros adicionales -->
+          <div class="param-row">
+            <label>α (alpha):</label>
+            <input type="number" id="advanced-alpha" value="0.9" step="0.1">
+          </div>
+          <div class="param-row">
+            <label>δ_0 (delta_0):</label>
+            <input type="number" id="advanced-delta-0" value="2.4" step="0.1">
+          </div>
+          <div class="param-row">
+            <label>E_0 (eV):</label>
+            <input type="number" id="advanced-e-0" value="400" step="10">
+          </div>
+          <div class="param-row">
+            <label>θ_m (rad):</label>
+            <input type="number" id="advanced-theta-m" value="0.8" step="0.1" max="1.57">
           </div>
         </div>
       </div>
@@ -166,7 +187,8 @@
         <div class="button-group">
           <button id="save-config">Guardar Config</button>
           <button id="load-config">Cargar Config</button>
-          <button id="export-results">Exportar Resultados</button>
+          <button id="export-results">Exportar JSON</button>
+          <button id="export-csv">Exportar CSV</button>
         </div>
       </div>
     </div>
@@ -243,6 +265,13 @@
     </div>
   </div>
 
-  <script src="funciones.js"></script>
+  <!-- Librerías y scripts modulares -->
+  <script src="js/config.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/drawing.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
