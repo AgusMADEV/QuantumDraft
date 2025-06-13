@@ -81,7 +81,7 @@ class Photon {
 function updatePhoton(p, dt) {
   const G = 1000;
 
-  // --- Atracción eléctrica ---
+  // Atracción eléctrica
   shapes.forEach(s => {
     if (s.voltage > 0) {
       const { x: bx, y: by, w, h } = getBoundingBox(s);
@@ -96,136 +96,90 @@ function updatePhoton(p, dt) {
     }
   });
 
-  // --- Movimiento ---
+  // Movimiento
   p.x += p.vx * dt;
   p.y += p.vy * dt;
 
-  // --- Rebote en los bordes del canvas (preservando velocidad) ---
-  // --- Rebote suave en los bordes del canvas ---
-const r = p.radius;
-const W = canvas.width, H = canvas.height;
-let bounced = false;
+  // Rebote en los bordes del canvas (como originalmente)
+  const r = p.radius, W = canvas.width, H = canvas.height;
+  if (p.x - r < 0)        { p.x = 2*r - p.x;           p.vx *= -1; }
+  if (p.x + r > W)        { p.x = 2*(W - r) - p.x;     p.vx *= -1; }
+  if (p.y - r < 0)        { p.y = 2*r - p.y;           p.vy *= -1; }
+  if (p.y + r > H)        { p.y = 2*(H - r) - p.y;     p.vy *= -1; }
 
-// Izquierda
-if (p.x - r < 0) {
-  // reflejamos el exceso: nueva x = r + (r - p.x)
-  p.x = 2*r - p.x;
-  p.vx *= -1;
-  bounced = true;
-}
-// Derecha
-if (p.x + r > W) {
-  // reflejamos sobre el borde W - r
-  p.x = 2*(W - r) - p.x;
-  p.vx *= -1;
-  bounced = true;
-}
-// Arriba
-if (p.y - r < 0) {
-  p.y = 2*r - p.y;
-  p.vy *= -1;
-  bounced = true;
-}
-// Abajo
-if (p.y + r > H) {
-  p.y = 2*(H - r) - p.y;
-  p.vy *= -1;
-  bounced = true;
-}
-
-if (bounced) {
-  // opcional: reajuste de magnitud si quieres asegurar que no cambia 
-  const speed = Math.hypot(p.vx, p.vy);
-  if (speed > 0) {
-    // mantén la propia velocidad original
-    // (si ya la invertimos, no hace falta normalizar de nuevo a menos que quieras)
-  }
-}
-  // ——— Nueva lógica de colisión con shapes ———
+  // Colisión con shapes (rebote según tipo de shape)
   shapes.forEach(s => {
-  let collided = false;
-
-  if (s.type === 'rectangle') {
-    // Colisión con rectángulo real
-    const { x: bx, y: by, w, h } = getBoundingBox(s);
-    // Expandimos la figura por el radio del fotón
-    if (
-      p.x > bx - p.radius &&
-      p.x < bx + w + p.radius &&
-      p.y > by - p.radius &&
-      p.y < by + h + p.radius
-    ) {
-      // Si está dentro del interior ampliado, colisiona
-      collided = true;
-    }
-  }
-  else if (s.type === 'ellipse') {
-    // Colisión con elipse real
-    const { x: bx, y: by, w, h } = getBoundingBox(s);
-    const cx = bx + w/2, cy = by + h/2;
-    const rx = Math.abs(w)/2 + p.radius;
-    const ry = Math.abs(h)/2 + p.radius;
-    const dx = p.x - cx, dy = p.y - cy;
-    if ((dx*dx)/(rx*rx) + (dy*dy)/(ry*ry) <= 1) {
-      collided = true;
-    }
-  }
-  else if (s.type === 'polygon' || s.type === 'path') {
-    // Colisión con polígono o path: miramos la distancia mínima
-    // de p al segmento más cercano del polígono:
-    const pts = s.points;
-    for (let i = 0; i < pts.length; i++) {
-      const a = pts[i], b = pts[(i+1)%pts.length];
-      // Proyección de p en el segmento ab:
-      const vx = b.x - a.x, vy = b.y - a.y;
-      const t = Math.max(0, Math.min(1, ((p.x - a.x)*vx + (p.y - a.y)*vy)/(vx*vx+vy*vy)));
-      const px = a.x + t*vx, py = a.y + t*vy;
-      const dist2 = (p.x-px)**2 + (p.y-py)**2;
-      if (dist2 <= p.radius*p.radius) {
+    let collided = false;
+    if (s.type === 'rectangle') {
+      const { x: bx, y: by, w, h } = getBoundingBox(s);
+      if (
+        p.x > bx - p.radius &&
+        p.x < bx + w + p.radius &&
+        p.y > by - p.radius &&
+        p.y < by + h + p.radius
+      ) {
         collided = true;
-        break;
       }
     }
-  }
-
-  if (!collided) return;
-
-  // ——— Rebote específico según la cara de impacto ———
-  // Calculamos distancias a cada “cara” de la bounding box
-  const { x: bx, y: by, w, h } = getBoundingBox(s);
-  const ex = bx - p.radius,
-        ey = by - p.radius,
-        ew = w + 2*p.radius,
-        eh = h + 2*p.radius;
-  const dLeft   = Math.abs(p.x - ex),
-        dRight  = Math.abs(p.x - (ex + ew)),
-        dTop    = Math.abs(p.y - ey),
-        dBottom = Math.abs(p.y - (ey + eh));
-  const minD = Math.min(dLeft, dRight, dTop, dBottom);
-
-  // Invertimos solo la componente necesaria y recolocamos
-  if (minD === dLeft || minD === dRight) {
-    p.vx *= -1;
-    p.x = (minD === dLeft) ? ex : (ex + ew);
-  } else {
-    p.vy *= -1;
-    p.y = (minD === dTop) ? ey : (ey + eh);
-  }
-
-  // ——— Multiplicación según k ———
-  const mult = s.k || 1;
-  if (mult > 1) {
-    const speed = Math.hypot(p.vx, p.vy);
-    for (let n = 0; n < mult - 1; n++) {
-      const phi = Math.random()*2*Math.PI;
-      const newP = new Photon(p.x, p.y);
-      const vf = 0.8 + Math.random()*0.4;
-      newP.vx = speed * vf * Math.cos(phi);
-      newP.vy = speed * vf * Math.sin(phi);
-      photons.push(newP);
+    else if (s.type === 'ellipse') {
+      const { x: bx, y: by, w, h } = getBoundingBox(s);
+      const cx = bx + w/2, cy = by + h/2;
+      const rx = Math.abs(w)/2 + p.radius;
+      const ry = Math.abs(h)/2 + p.radius;
+      const dx = p.x - cx, dy = p.y - cy;
+      if ((dx*dx)/(rx*rx) + (dy*dy)/(ry*ry) <= 1) {
+        collided = true;
+      }
     }
-  }
-});
+    else if (s.type === 'polygon' || s.type === 'path') {
+      const pts = s.points;
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i+1)%pts.length];
+        const vx = b.x - a.x, vy = b.y - a.y;
+        const t = Math.max(0, Math.min(1, ((p.x - a.x)*vx + (p.y - a.y)*vy)/(vx*vx+vy*vy)));
+        const px = a.x + t*vx, py = a.y + t*vy;
+        const dist2 = (p.x-px)**2 + (p.y-py)**2;
+        if (dist2 <= p.radius*p.radius) {
+          collided = true;
+          break;
+        }
+      }
+    }
+
+    if (!collided) return;
+
+    // Rebote normal según la cara de impacto
+    const { x: bx, y: by, w, h } = getBoundingBox(s);
+    const ex = bx - p.radius, ey = by - p.radius;
+    const ew = w + 2*p.radius, eh = h + 2*p.radius;
+    const dLeft   = Math.abs(p.x - ex),
+          dRight  = Math.abs(p.x - (ex + ew)),
+          dTop    = Math.abs(p.y - ey),
+          dBottom = Math.abs(p.y - (ey + eh));
+    const minD = Math.min(dLeft, dRight, dTop, dBottom);
+
+    if (minD === dLeft || minD === dRight) {
+      p.vx *= -1;
+      p.x = (minD === dLeft) ? ex : (ex + ew);
+    } else {
+      p.vy *= -1;
+      p.y = (minD === dTop) ? ey : (ey + eh);
+    }
+
+    // Multiplicación según k
+    const mult = s.k || 1;
+    if (mult > 1) {
+      const speed = Math.hypot(p.vx, p.vy);
+      for (let n = 1; n < mult; n++) {
+        const phi = Math.random()*2*Math.PI;
+        const newP = new Photon(p.x, p.y);
+        const vf = 0.8 + Math.random()*0.4;
+        newP.vx = speed * vf * Math.cos(phi);
+        newP.vy = speed * vf * Math.sin(phi);
+        photons.push(newP);
+      }
+    }
+  });
 
   // Registrar trayectoria
   p.path.push({ x: p.x, y: p.y });
@@ -874,24 +828,38 @@ document.getElementById('save-btn').addEventListener('click', () => {
 });
 
 // ----------------------------------------
-// 4) Listener de “Play” sin velocidad inicial
+// Listener de “Play” sin velocidad inicial
 // ----------------------------------------
 document.getElementById('play-photons-btn').addEventListener('click', () => {
+  // Detener animación previa
   if (animId) cancelAnimationFrame(animId);
 
+  // Número de fotones deseado
   const countInput = document.getElementById('photon-count');
   let n = parseInt(countInput.value, 10) || 0;
   n = Math.max(0, Math.min(5, n));
 
-  photons = [];
-  const margin = 10;
+  // ——— NUEVO: Buscar shapes con componentType 'otro' ———
+  const otroShapes = shapes.filter(s => s.componentType === 'otro');
 
-  for (let i = 0; i < n; i++) {
-    const px = Math.random() * (canvas.width - 2*margin) + margin;
-    const py = Math.random() * (canvas.height - 2*margin) + margin;
-    const p = new Photon(px, py);
-    // vx y vy quedan en 0 hasta que actúe la atracción
-    photons.push(p);
+  photons = [];
+
+  if (otroShapes.length > 0) {
+    // ——— NUEVO: Generar dentro del primer 'otro' ———
+    const cont = getBoundingBox(otroShapes[0]);
+    for (let i = 0; i < n; i++) {
+      const px = cont.x + Math.random() * cont.w;
+      const py = cont.y + Math.random() * cont.h;
+      photons.push(new Photon(px, py));
+    }
+  } else {
+    // Lógica original: cuadro completo del canvas
+    const margin = 10;
+    for (let i = 0; i < n; i++) {
+      const px = Math.random() * (canvas.width - 2*margin) + margin;
+      const py = Math.random() * (canvas.height - 2*margin) + margin;
+      photons.push(new Photon(px, py));
+    }
   }
 
   animatePhotons();
@@ -914,7 +882,7 @@ function updateShapesInfoTable() {
     tdIndex.textContent = index + 1;
     tr.appendChild(tdIndex);
 
-    // Tipo
+    // Tipo (componentType)
     const tdType = document.createElement('td');
     const select = document.createElement('select');
     COMPONENT_TYPES.forEach(opt => {
@@ -923,13 +891,15 @@ function updateShapesInfoTable() {
       option.textContent = opt;
       select.appendChild(option);
     });
-    select.value = s.componentType || 'otro';
+    // Aseguramos valor válido: si no está en COMPONENT_TYPES, forzamos 'otro'
+    if (COMPONENT_TYPES.includes(s.componentType)) {
+      select.value = s.componentType;
+    } else {
+      select.value = 'otro';
+      shapes[index].componentType = 'otro';
+    }
     select.addEventListener('change', () => {
       shapes[index].componentType = select.value;
-      // Solo 'dinodo' editable k
-      kInput.disabled = select.value !== 'dinodo';
-      if (select.value !== 'dinodo') shapes[index].k = 1;
-      redrawAll();
     });
     tdType.appendChild(select);
     tr.appendChild(tdType);
