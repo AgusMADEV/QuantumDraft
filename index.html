@@ -3,91 +3,243 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fotomultiplicador 2D | QuantumDraft</title>
+  <title>Simulador Fotomultiplicador 2D | QuantumDraft</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Fotomultiplicador 2D | QuantumDraft</h1>
+  <h1>Simulador Fotomultiplicador 2D | QuantumDraft</h1>
   <div class="main-container">
-    <!-- Panel de controles (columna izquierda) -->
+    <!-- Panel de controles del PMT (columna izquierda) -->
     <div class="controls">
-      <button data-tool="pencil" class="tool-btn">Lápiz</button>
-      <button data-tool="eraser" class="tool-btn" id="eraser-btn">Borrador</button>
-      <button data-tool="rectangle" class="tool-btn">Rectángulo</button>
-      <button data-tool="ellipse" class="tool-btn">Elipse</button>
-      <button data-tool="polygon" class="tool-btn">Polígono</button>
-      <button data-tool="path" class="tool-btn">Path libre</button>
-      <button data-tool="select" class="tool-btn">Seleccionar</button>
-      <!-- “Eliminar Selección” solo visible con herramienta select -->
-      <button id="delete-btn" style="display: none;" disabled>Eliminar Selección</button>
-      <div id="shape-params" class="tool-group" style="display:none;">
-        <div class="shape-input">
-          <label for="shape-fill">Color Relleno:</label>
-          <input type="color" id="shape-fill" value="#ffffff">
+      <h3>Configuración PMT</h3>
+      
+      <!-- Controles de configuración de elementos -->
+      <div class="pmt-config">
+        <div class="config-section">
+          <h4>Elementos Principales</h4>
+          <div class="element-row">
+            <label>
+              <input type="checkbox" id="photocathode-enabled" checked disabled> 
+              Fotocátodo (requerido)
+            </label>
+            <input type="number" id="photocathode-voltage" value="0" step="10" placeholder="Voltaje (V)">
+          </div>
+          
+          <div class="element-row">
+            <label>
+              <input type="checkbox" id="accelerator-enabled"> 
+              Acelerador
+            </label>
+            <input type="number" id="accelerator-voltage" value="-50" step="10" placeholder="Voltaje (V)">
+          </div>
+          
+          <div class="element-row">
+            <label>
+              <input type="checkbox" id="grid-enabled"> 
+              Grid
+            </label>
+            <input type="number" id="grid-voltage" value="-20" step="10" placeholder="Voltaje (V)">
+          </div>
+          
+          <div class="element-row">
+            <label>
+              <input type="checkbox" id="anode-enabled" checked disabled> 
+              Ánodo (requerido)
+            </label>
+            <input type="number" id="anode-voltage" value="1000" step="50" placeholder="Voltaje (V)">
+          </div>
         </div>
-        <div class="shape-input">
-          <label for="shape-border">Color Borde:</label>
-          <input type="color" id="shape-border" value="#000000">
-        </div>
-      </div>
-      <div id="global-color" class="tool-group">
-        <label for="color-picker">Color / Trazado:</label>
-        <input type="color" id="color-picker" value="#000000" />
-      </div>
-      <label for="size-slider">Tamaño / Grosor:</label>
-      <input type="range" id="size-slider" min="1" max="50" value="5" />
-      <div id="selection-params" class="tool-group" style="display:none;">
-        <div class="shape-input">
-          <label for="select-width">Ancho:</label>
-          <input type="number" id="select-width" min="1" value="0">
-        </div>
-        <div class="shape-input">
-          <label for="select-height">Alto:</label>
-          <input type="number" id="select-height" min="1" value="0">
-        </div>
-      </div>
-      <!-- Controles de fotones -->
-      <div class="photon-controls" style="margin-top: 10px;">
-        <label for="photon-count">Número de fotones:</label>
-        <input 
-          id="photon-count" 
-          type="number" 
-          min="0" 
-          max="5" 
-          value="0" 
-          style="width: 60px; margin: 0 8px;"
-        />
-        <button id="play-photons-btn">Play</button>
-      </div>
-      <button id="clear-btn">Limpiar Canvas</button>
 
-      <input type="text" id="drawing-name" placeholder="Nombre del dibujo" />
-      <button id="save-btn">Guardar Dibujo</button>
+        <!-- Configuración de dinodos -->
+        <div class="config-section">
+          <h4>Dinodos</h4>
+          <div class="dynode-controls">
+            <label>Número de dinodos:</label>
+            <input type="number" id="dynode-count" min="4" max="20" value="8">
+            <button id="generate-dynodes">Generar Voltajes</button>
+          </div>
+          
+          <div class="amplification-model">
+            <label>Modelo de amplificación:</label>
+            <select id="amplification-model">
+              <option value="simple">Simple (r^β)</option>
+              <option value="advanced">Avanzado (8 parámetros)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Parámetros del modelo simple -->
+        <div id="simple-model-params" class="config-section">
+          <h4>Parámetros Modelo Simple</h4>
+          <div class="param-row">
+            <label>Factor r:</label>
+            <input type="number" id="simple-r" value="2" step="0.1" min="1">
+          </div>
+          <div class="param-row">
+            <label>Exponente β:</label>
+            <input type="number" id="simple-beta" value="0.7" step="0.1" min="0">
+          </div>
+        </div>
+
+        <!-- Parámetros del modelo avanzado -->
+        <div id="advanced-model-params" class="config-section" style="display: none;">
+          <h4>Parámetros Modelo Avanzado</h4>
+          <div class="param-row">
+            <label>σ_E (eV):</label>
+            <input type="number" id="advanced-sigma-e" value="2.2" step="0.1">
+          </div>
+          <div class="param-row">
+            <label>E_max (eV):</label>
+            <input type="number" id="advanced-e-max" value="1500" step="10">
+          </div>
+          <div class="param-row">
+            <label>σ_max:</label>
+            <input type="number" id="advanced-sigma-max" value="2.5" step="0.1">
+          </div>
+          <div class="param-row">
+            <label>s:</label>
+            <input type="number" id="advanced-s" value="1.35" step="0.05">
+          </div>
+        </div>
+      </div>
+
+      <!-- Controles de simulación -->
+      <div class="simulation-controls">
+        <h4>Simulación</h4>
+        <div class="param-row">
+          <label>Fotones iniciales:</label>
+          <input type="number" id="photon-count" min="1" max="50" value="5">
+        </div>
+        <div class="param-row">
+          <label>Velocidad simulación:</label>
+          <input type="range" id="sim-speed" min="0.1" max="2" value="1" step="0.1">
+          <span id="speed-value">1x</span>
+        </div>
+        <div class="param-row">
+          <label>
+            <input type="checkbox" id="show-trails" checked> 
+            Mostrar trazas
+          </label>
+        </div>
+        <div class="param-row">
+          <label>
+            <input type="checkbox" id="show-electric-field"> 
+            Mostrar campo eléctrico
+          </label>
+        </div>
+        
+        <div class="button-group">
+          <button id="play-simulation">▶ Iniciar</button>
+          <button id="pause-simulation">⏸ Pausar</button>
+          <button id="stop-simulation">⏹ Detener</button>
+        </div>
+      </div>
+
+      <!-- Herramientas de dibujo -->
+      <div class="drawing-tools">
+        <h4>Herramientas de Dibujo</h4>
+        <div class="tool-buttons">
+          <button data-tool="rectangle" class="tool-btn">Rectángulo</button>
+          <button data-tool="ellipse" class="tool-btn">Elipse</button>
+          <button data-tool="polygon" class="tool-btn">Polígono</button>
+          <button data-tool="select" class="tool-btn">Seleccionar</button>
+        </div>
+        
+        <div id="shape-params" style="display:none;">
+          <div class="param-row">
+            <label>Color Relleno:</label>
+            <input type="color" id="shape-fill" value="#ffffff">
+          </div>
+          <div class="param-row">
+            <label>Color Borde:</label>
+            <input type="color" id="shape-border" value="#000000">
+          </div>
+        </div>
+        
+        <button id="clear-canvas">Limpiar Todo</button>
+      </div>
+
+      <!-- Configuración de archivo -->
+      <div class="file-controls">
+        <h4>Archivo</h4>
+        <input type="text" id="config-name" placeholder="Nombre configuración">
+        <div class="button-group">
+          <button id="save-config">Guardar Config</button>
+          <button id="load-config">Cargar Config</button>
+          <button id="export-results">Exportar Resultados</button>
+        </div>
+      </div>
     </div>
 
     <!-- Contenedor del Canvas (columna central) -->
     <div class="canvas-container">
-      <canvas id="drawing-canvas"></canvas>
+      <canvas id="pmt-canvas"></canvas>
+      <div class="canvas-info">
+        <div class="info-panel">
+          <span>Fotones activos: <span id="active-photons">0</span></span>
+          <span>Ganancia total: <span id="total-gain">0</span></span>
+          <span>Tiempo: <span id="simulation-time">0.00s</span></span>
+        </div>
+      </div>
     </div>
 
-    <!-- Contenedor de la tabla (columna derecha) -->
-    <div id="info-table-container">
-      <h2>Elementos Dibujados</h2>
-      <table id="shapes-info-table">
-        <thead>
-        <tr>
-          <th>#</th>
-          <th>Tipo</th>
-          <th>Voltaje (V)</th>
-          <th>K</th>
-          <th>Relleno</th>
-          <th>Eliminar</th>
-        </tr>
-      </thead>
-        <tbody>
-          <!-- Se rellenará dinámicamente vía JavaScript -->
-        </tbody>
-      </table>
+    <!-- Tabla de dinodos (columna derecha) -->
+    <div class="dynode-table-container">
+      <h3>Configuración de Dinodos</h3>
+      <div class="table-wrapper">
+        <table id="dynode-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Voltaje (V)</th>
+              <th>Ganancia</th>
+              <th>Posición</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Se llena dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Estadísticas de simulación -->
+      <div class="simulation-stats">
+        <h4>Estadísticas</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <label>Fotones detectados:</label>
+            <span id="detected-photons">0</span>
+          </div>
+          <div class="stat-item">
+            <label>Eficiencia cuántica:</label>
+            <span id="quantum-efficiency">0%</span>
+          </div>
+          <div class="stat-item">
+            <label>Ganancia promedio:</label>
+            <span id="average-gain">0</span>
+          </div>
+          <div class="stat-item">
+            <label>Tiempo de tránsito:</label>
+            <span id="transit-time">0 ns</span>
+          </div>
+          <div class="stats-section">
+            <h5>Diagnósticos Físicos</h5>
+            <div class="stat-item">
+              <label>Energía promedio:</label>
+              <span id="average-energy">0 eV</span>
+            </div>
+            <div class="stat-item">
+              <label>Velocidad promedio:</label>
+              <span id="average-velocity">0 m/s</span>
+            </div>
+            <div class="stat-item">
+              <label>Factor γ máximo:</label>
+              <span id="max-gamma">1.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

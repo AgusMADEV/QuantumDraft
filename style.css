@@ -33,11 +33,10 @@ h1 {
 }
 
 .main-container {
-    display: flex;
-    justify-content: left;
-    align-items: flex-start;
-    gap: 40px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 350px 1fr 300px;
+    gap: 20px;
+    align-items: start;
 }
 
 .controls {
@@ -50,6 +49,8 @@ h1 {
     gap: 15px;
     min-width: 250px;
     max-width: 300px;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .controls label {
@@ -103,8 +104,14 @@ button:active {
 }
 
 .canvas-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#pmt-canvas {
     width: 100%;
-    max-width: 1360px;
+    height: 500px;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
 }
 
 canvas {
@@ -122,99 +129,85 @@ canvas:hover {
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
-@media (max-width: 1750px) {
-    .main-container {
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .controls {
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: center;
-      max-width: 100%;
-    }
-
-    .controls > * {
-      flex: 1 1 100px;
-    }
-}
-
-.tool-btn.active {
-  background-color: #0eb173;
-}
-
-/* Animación de entrada */
-@keyframes fadeSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Aplicar al contenedor de parámetros de forma */
-#shape-params {
-  margin-top: 1rem;
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-  animation: fadeSlideIn 0.3s ease-out;
-}
-
-#shape-params input[type="number"] {
-  padding: 0.3rem 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  width: 6rem;
-  transition: border-color 0.3s;
-  margin: 5px 0px;
-}
-
-#shape-params input[type="number"]:focus {
-  border-color: #4ade80;
-  outline: none;
-}
-
-#selection-params {
-  animation: fadeSlideIn 0.3s ease-out;
-}
-
-.shape-input {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  background-color: var(--card-bg);
-  padding: 0.55rem;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--border-radius);
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.shape-input label {
-    font-weight: 600;
+.controls h3, .controls h4 {
     color: var(--secondary);
-    font-size: 0.8rem;
+    margin-bottom: 10px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 5px;
 }
 
-.shape-input input {
-    padding: 0.2rem;
+.config-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: var(--border-radius);
+    border: 1px solid #e2e8f0;
+}
+
+.element-row, .param-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.element-row label, .param-row label {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.element-row input[type="number"], 
+.param-row input[type="number"],
+.param-row input[type="range"] {
+    flex: 0 0 80px;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.dynode-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.amplification-model {
+    margin-top: 10px;
+}
+
+.amplification-model select {
+    width: 100%;
+    padding: 6px;
     border: 1px solid #cbd5e1;
     border-radius: var(--border-radius);
-    transition: border-color 0.2s ease;
-    font-size: 0.75rem;
+    background: white;
 }
 
-.shape-input input:focus {
-    border-color: var(--accent);
+.simulation-controls {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
 }
 
-/* Estilos para la tabla de “elementos dibujados” */
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.button-group button {
+    flex: 1;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.tool-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
 #shapes-info-table {
   width: 100%;
   border-collapse: collapse;
@@ -243,4 +236,381 @@ canvas:hover {
 #shapes-info-table select,
 #shapes-info-table input[type="color"] {
   cursor: pointer;
+}
+
+.canvas-info {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.info-panel {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.info-panel span {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.dynode-table-container {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.table-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--border-radius);
+}
+
+#dynode-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+#dynode-table th {
+    background: var(--secondary);
+    color: var(--text);
+    padding: 8px 6px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+}
+
+#dynode-table td {
+    padding: 6px;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#dynode-table tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+#dynode-table input[type="number"] {
+    width: 60px;
+    padding: 2px 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    text-align: center;
+}
+
+.simulation-stats {
+    background: #f0f9ff;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid #e0f2fe;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.stat-item label {
+    font-size: 0.8rem;
+    color: var(--secondary);
+    margin-bottom: 2px;
+}
+
+.stat-item span {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 0.9rem;
+}
+
+/* Estados de elementos PMT */
+.pmt-element-photocathode {
+    background: linear-gradient(45deg, #3b82f6, #1d4ed8) !important;
+}
+
+.pmt-element-dynode {
+    background: linear-gradient(45deg, #ef4444, #dc2626) !important;
+}
+
+.pmt-element-anode {
+    background: linear-gradient(45deg, #10b981, #059669) !important;
+}
+
+.pmt-element-accelerator {
+    background: linear-gradient(45deg, #f59e0b, #d97706) !important;
+}
+
+.pmt-element-grid {
+    background: linear-gradient(45deg, #8b5cf6, #7c3aed) !important;
+}
+
+/* Partículas y efectos */
+.photon-trail {
+    stroke: #60a5fa;
+    stroke-width: 2;
+    fill: none;
+    opacity: 0.7;
+}
+
+.electric-field-line {
+    stroke: #fbbf24;
+    stroke-width: 1;
+    stroke-dasharray: 2,2;
+    opacity: 0.5;
+}
+
+/* Estilos adicionales para el simulador PMT */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 0 auto;
+}
+
+.status-indicator.active {
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+}
+
+.status-indicator.inactive {
+    background: #ef4444;
+    box-shadow: 0 0 6px #ef4444;
+}
+
+/* Mejoras para los controles del PMT */
+.pmt-config {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.dynode-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.dynode-controls label {
+    font-size: 0.9rem;
+    color: var(--secondary);
+}
+
+.dynode-controls input[type="number"] {
+    width: 60px;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+}
+
+.dynode-controls button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    background: var(--accent);
+    white-space: nowrap;
+}
+
+/* Estilos para las herramientas de dibujo */
+.drawing-tools {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 15px;
+    margin-top: 15px;
+}
+
+.tool-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.tool-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    background: #6b7280;
+}
+
+.tool-btn.active {
+    background: var(--accent);
+}
+
+/* Controles de archivo */
+.file-controls {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 15px;
+    margin-top: 15px;
+}
+
+.file-controls input[type="text"] {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+}
+
+/* Responsive design */
+@media (max-width: 1400px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .controls {
+        max-width: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+    }
+    
+    .dynode-table-container {
+        order: 3;
+    }
+}
+
+/* Mejoras responsivas específicas */
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+    }
+    
+    .controls {
+        max-height: none;
+        overflow-y: visible;
+        order: 1;
+    }
+    
+    .canvas-container {
+        order: 2;
+    }
+    
+    .dynode-table-container {
+        order: 3;
+        max-height: 60vh;
+    }
+}
+
+@media (max-width: 768px) {
+    .controls {
+        grid-template-columns: 1fr;
+    }
+    
+    .config-section {
+        margin-bottom: 15px;
+        padding: 12px;
+    }
+    
+    .element-row, .param-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .dynode-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animaciones mejoradas */
+@keyframes photon-glow {
+    0%, 100% { box-shadow: 0 0 5px #60a5fa; }
+    50% { box-shadow: 0 0 15px #3b82f6, 0 0 25px #1d4ed8; }
+}
+
+.photon-active {
+    animation: photon-glow 1s ease-in-out infinite;
+}
+
+@keyframes dynode-hit {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); filter: brightness(1.3); }
+    100% { transform: scale(1); }
+}
+
+.dynode-collision {
+    animation: dynode-hit 0.3s ease-out;
+}
+
+/* Tooltips para elementos */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--secondary);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.tooltip:hover::after {
+    opacity: 1;
+}
+
+/* Estados de simulación */
+.simulation-running .controls {
+    border-left: 4px solid #10b981;
+}
+
+.simulation-paused .controls {
+    border-left: 4px solid #f59e0b;
+}
+
+.simulation-stopped .controls {
+    border-left: 4px solid #ef4444;
+}
+
+/* Mejoras de accesibilidad */
+button:focus, input:focus, select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
