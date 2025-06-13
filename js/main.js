@@ -4,29 +4,12 @@
 
 // Elementos globales
 let canvas, ctx;
-let engine;
-let pmtConfig = {
-    photocathode: { type: 'photocathode', voltage: 0, color: '#5eead4', required: true, enabled: true },
-    accelerator: { type: 'accelerator', voltage: -50, color: '#d8b4fe', optional: true, enabled: false },
-    grid: { type: 'grid', voltage: -20, color: '#bae6fd', optional: true, enabled: false },
-    dynodes: [],
-    anode: { type: 'anode', voltage: 1000, color: '#a3e635', required: true, enabled: true },
-    amplificationModel: 'simple',
-    simpleParams: { r: 2, beta: 0.7 },
-    advancedParams: { 
-        sigma_E: 2.2, 
-        E_max: 1500, 
-        sigma_max: 2.5, 
-        s: 1.35,
-        alpha: 0.9,
-        delta_0: 2.4,
-        E_0: 400,
-        theta_m: 0.8
-    }
-};
+var engine;
+// Configuración PMT (solo si no existe)
+/* Se elimina la redefinición de pmtConfig en main.js, se utiliza la configuración proveniente de config.js */
 
 // Estado de la simulación
-let simulationState = {
+simulationState = {
     running: false,
     time: 0,
     speed: 1.0,
@@ -42,9 +25,9 @@ let simulationState = {
 };
 
 // Constantes
-const MAX_PARTICLES = 1000; // Máximo de partículas en simulación
 
 // Constantes físicas
+/* comment out redeclaration of PHYSICS, use global from config.js
 const PHYSICS = {
     electronMass: 9.1093837e-31, // kg
     electronCharge: -1.602176634e-19, // C
@@ -55,17 +38,18 @@ const PHYSICS = {
     Wpk: 1.5, // eV - Función trabajo fotocátodo
     Wsec: 1.0, // eV - Energía de electrones secundarios
 };
+*/
 
 // Inicializar aplicación al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
     setupCanvas();
     setupEventListeners();
+    initSimulation();  // Crear engine antes de configurar elementos
     initializeMainElements();
-    initSimulation();
     generateDefaultDynodes();
     updateDynodeTable();
     initializeDrawingTools();
-    engine.render();
+    if (engine && typeof engine.render === 'function') engine.render();
 });
 
 // Ajustar canvas al redimensionar ventana
@@ -162,9 +146,11 @@ function initSimulation() {
                 
                 // Velocidad inicial (simpificación física: solo hacia la derecha)
                 const initialEnergy = 1.5; // eV
+                // Calcular velocidad en píxeles por segundo usando conversión física-píxel
                 const speed = Math.sqrt(2 * initialEnergy * PHYSICS.eVtoJoules / photon.mass);
-                photon.velocity.x = speed;
-                photon.velocity.y = (Math.random() - 0.5) * speed * 0.2; // Pequeña dispersión
+                const speedPx = speed * PHYSICS.pixelToMeter; // velocidad convertida a px/s
+                photon.velocity.x = speedPx;
+                photon.velocity.y = (Math.random() - 0.5) * speedPx * 0.2; // Pequeña dispersión en px/s
                 
                 // Asignar ID único para seguimiento
                 photon.id = simulationState.statistics.totalPhotons + i;
@@ -176,8 +162,11 @@ function initSimulation() {
             // Actualizar estadística
             simulationState.statistics.totalPhotons += count;
             
-            // Actualizar UI
-            document.getElementById('total-photons').textContent = simulationState.statistics.totalPhotons;
+            // Actualizar número de fotones activos en la UI
+            const activeElem = document.getElementById('active-photons');
+            if (activeElem) {
+                activeElem.textContent = simulationState.photons.filter(p => p.isActive).length;
+            }
         },
         update: function(dt) {
             // Solo actualizar si hay partículas activas
@@ -469,9 +458,4 @@ function updateUIStatistics() {
     if (window.updateStatisticsGraph) {
         window.updateStatisticsGraph(simulationState.statistics);
     }
-}
-
-// Verificar si engine ya está definido en el ámbito global
-if (typeof engine === 'undefined') {
-    let engine;
 }

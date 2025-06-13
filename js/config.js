@@ -19,7 +19,7 @@ let simulationState = {
 };
 
 // Configuración PMT
-let pmtConfig = {
+var pmtConfig = {
     photocathode: { enabled: true, voltage: 0, position: null, amplification: 1 },
     accelerator: { enabled: false, voltage: -50, position: null, amplification: 1 },
     grid: { enabled: false, voltage: -20, position: null, amplification: 1 },

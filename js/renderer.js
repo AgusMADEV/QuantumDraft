@@ -340,7 +340,7 @@ class SimulationEngine {
 }
 
 // Instanciar motor de simulación
-const engine = new SimulationEngine();
+// const engine = new SimulationEngine();
 
 // Configuración del canvas
 function setupCanvas() {
