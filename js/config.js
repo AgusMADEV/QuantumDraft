@@ -3,12 +3,13 @@
 // ===================================================================
 
 // Estado global de la simulación
-let simulationState = {
-    isRunning: false,
+window.simulationState = {
+    running: false,
     isPaused: false,
     time: 0,
     speed: 1,
     photons: [],
+    lastTimestamp: 0,
     statistics: {
         totalPhotons: 0,
         detectedPhotons: 0,
@@ -42,7 +43,7 @@ var pmtConfig = {
 };
 
 // Constantes físicas
-const PHYSICS = {
+window.PHYSICS = {
     electronCharge: -1.6021892e-19, // Coulombs
     electronMass: 9.10953e-31,      // kg
     speedOfLight: 299792458,        // m/s

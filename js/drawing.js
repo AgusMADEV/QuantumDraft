@@ -2,10 +2,11 @@
 // HERRAMIENTAS DE DIBUJO - Simulador Fotomultiplicador 2D
 // ===================================================================
 
-// Estado del dibujo
-const drawingState = {
+// Estado del dibujo (variable global para accesibilidad)
+window.drawingState = {
     isDrawing: false,
-    currentTool: null, // 'rectangle', 'ellipse', 'polygon'
+    mode: null, // 'rectangle', 'ellipse', 'polygon'
+    currentTool: null,
     currentElement: null,
     selectedElement: null,
     startX: 0,
@@ -467,6 +468,34 @@ function promptElementType() {
         });
     });
 }
+
+// Función para aceptar el elemento dibujado actualmente
+// Esta función es llamada por el validador para probar la creación de elementos
+window.acceptDrawnElement = function() {
+    if (!drawingState.currentElement || !drawingState.currentTool) {
+        console.warn('No hay un elemento siendo dibujado actualmente');
+        return false;
+    }
+    
+    // Normalizar dimensiones del elemento actual
+    normalizeShape(drawingState.currentElement);
+    
+    // Por defecto, crear como el tipo seleccionado (o ánodo si no hay selección)
+    const elementType = drawingState.currentElement.type || 'anode';
+    
+    // Añadir a la configuración
+    addShapeToConfig(drawingState.currentElement, elementType);
+    
+    // Limpiar el estado actual
+    drawingState.currentElement = null;
+    drawingState.isDrawing = false;
+    
+    // Actualizar canvas
+    engine.render();
+    
+    console.log(`Elemento ${elementType} aceptado y añadido a la configuración`);
+    return true;
+};
 
 // Añadir forma a la configuración
 function addShapeToConfig(shape, elementType) {

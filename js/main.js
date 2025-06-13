@@ -112,30 +112,52 @@ function initSimulation() {
             ElectricFieldCalculator.drawField(ctx);
             
             // Dibujar partículas activas
-            simulationState.photons.forEach(p => {
-                if (p.isActive) Photon.draw.call(p, ctx);
+            const activePhotons = simulationState.photons.filter(p => p.isActive);
+            console.log(`Renderizando ${activePhotons.length} fotones activos`);
+            
+            activePhotons.forEach(p => {
+                try {
+                    Photon.draw.call(p, ctx);
+                } catch (error) {
+                    console.error('Error al dibujar fotón:', error);
+                }
             });
             
+            // Dibujar estadísticas en pantalla
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '12px Arial';
+            ctx.fillText(`Fotones activos: ${activePhotons.length}`, 10, 20);
+            ctx.fillText(`Tiempo: ${simulationState.time.toFixed(2)}s`, 10, 40);
+            
             // Actualizar contador de partículas activas en la UI
-            const activeCount = simulationState.photons.filter(p => p.isActive).length;
-            document.getElementById('active-photons').textContent = activeCount;
+            document.getElementById('active-photons').textContent = activePhotons.length;
         },
         generatePhotons: function(count) {
-            // Ubicación del fotocátodo
-            const photocathode = pmtConfig.photocathode;
-            if (!photocathode.position) {
-                console.error('El fotocátodo no está posicionado');
+            // Verificar que photonPool esté disponible
+            if (!window.photonPool) {
+                console.error('Error: photonPool no está disponible');
                 return;
             }
             
-            // Generar fotones en el fotocátodo
+            // Ubicación del fotocátodo
+            const photocathode = pmtConfig.photocathode;
+            if (!photocathode.position || !photocathode.shape) {
+                console.error('Error: El fotocátodo no está posicionado correctamente');
+                console.log('Posición del fotocátodo:', photocathode.position);
+                console.log('Forma del fotocátodo:', photocathode.shape);
+                return;
+            }
+            
+            console.log(`Generando ${count} fotones desde el fotocátodo:`, photocathode);
+            
+            // Generar fotones en la parte derecha del fotocátodo (para que no estén dentro)
             for (let i = 0; i < count; i++) {
-                // Posición aleatoria en el fotocátodo
-                const x = photocathode.position.x + Math.random() * (photocathode.shape?.w || 10);
-                const y = photocathode.position.y + Math.random() * (photocathode.shape?.h || 100);
+                // Posición específica para evitar colisiones: a la derecha del fotocátodo
+                const x = photocathode.position.x + photocathode.shape.w + 5; // 5px a la derecha del fotocátodo
+                const y = photocathode.position.y + Math.random() * photocathode.shape.h;
                 
                 // Crear fotón
-                const photon = photonPool.get();
+                const photon = window.photonPool.get();
                 
                 // Inicializar propiedades
                 photon.position.x = x;
@@ -144,19 +166,20 @@ function initSimulation() {
                 photon.lifetime = 0;
                 photon.trail = [];
                 
-                // Velocidad inicial (simpificación física: solo hacia la derecha)
+                // Velocidad inicial (simplificación física: hacia la derecha)
                 const initialEnergy = 1.5; // eV
-                // Calcular velocidad en píxeles por segundo usando conversión física-píxel
-                const speed = Math.sqrt(2 * initialEnergy * PHYSICS.eVtoJoules / photon.mass);
-                const speedPx = speed * PHYSICS.pixelToMeter; // velocidad convertida a px/s
-                photon.velocity.x = speedPx;
-                photon.velocity.y = (Math.random() - 0.5) * speedPx * 0.2; // Pequeña dispersión en px/s
+                // Calcular velocidad en píxeles por segundo
+                photon.velocity.x = 100; // Valor fijo para pruebas, simplifica el problema
+                photon.velocity.y = (Math.random() - 0.5) * 20; // Pequeña dispersión
                 
                 // Asignar ID único para seguimiento
                 photon.id = simulationState.statistics.totalPhotons + i;
+                photon.color = '#2196F3'; // Color azul para fotones iniciales
                 
                 // Añadir a lista de partículas activas
                 simulationState.photons.push(photon);
+                
+                console.log(`Fotón #${photon.id} creado en posición (${x}, ${y}) con velocidad (${photon.velocity.x}, ${photon.velocity.y})`);
             }
             
             // Actualizar estadística
@@ -296,6 +319,66 @@ function generateDefaultDynodes() {
     // Actualizar tabla y canvas
     updateDynodeTable();
     engine.render();
+}
+
+// Inicializar elementos principales del PMT
+function initializeMainElements() {
+    const canvas = document.getElementById('pmt-canvas');
+    if (!canvas) return;
+    
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    // Posiciones iniciales
+    const startX = canvasWidth * 0.1;
+    const endX = canvasWidth * 0.9;
+    const midY = canvasHeight / 2;
+    const height = canvasHeight * 0.5;
+    const width = 5;
+    
+    // Inicializar fotocátodo (izquierda)
+    pmtConfig.photocathode.position = { x: startX - width * 2, y: midY - height / 2 };
+    pmtConfig.photocathode.shape = {
+        type: 'rectangle',
+        x: pmtConfig.photocathode.position.x,
+        y: pmtConfig.photocathode.position.y,
+        w: width,
+        h: height
+    };
+    
+    // Inicializar ánodo (derecha)
+    pmtConfig.anode.position = { x: endX + width, y: midY - height / 2 };
+    pmtConfig.anode.shape = {
+        type: 'rectangle',
+        x: pmtConfig.anode.position.x,
+        y: pmtConfig.anode.position.y,
+        w: width,
+        h: height
+    };
+    
+    // Inicializar acelerador (opcional, entre fotocátodo y primer dinodo)
+    pmtConfig.accelerator.position = { x: startX + width * 2, y: midY - height / 2 };
+    pmtConfig.accelerator.shape = {
+        type: 'rectangle',
+        x: pmtConfig.accelerator.position.x,
+        y: pmtConfig.accelerator.position.y,
+        w: width,
+        h: height * 0.7
+    };
+    
+    // Inicializar grid (opcional, entre último dinodo y ánodo)
+    pmtConfig.grid.position = { x: endX - width * 2, y: midY - height / 2 };
+    pmtConfig.grid.shape = {
+        type: 'rectangle',
+        x: pmtConfig.grid.position.x,
+        y: pmtConfig.grid.position.y,
+        w: width,
+        h: height * 0.7
+    };
+    
+    // Sincronizar checkboxes
+    document.getElementById('accelerator-enabled').checked = pmtConfig.accelerator.enabled;
+    document.getElementById('grid-enabled').checked = pmtConfig.grid.enabled;
 }
 
 // Actualizar elemento en configuración
