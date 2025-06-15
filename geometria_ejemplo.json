@@ -1,0 +1,223 @@
+{
+  "name": "PMT Configuración Estándar",
+  "timestamp": 1718380256789,
+  "photocathode": {
+    "type": "photocathode",
+    "voltage": 0,
+    "position": {
+      "x": 50,
+      "y": 150
+    },
+    "shape": {
+      "type": "rectangle",
+      "x": 50,
+      "y": 150,
+      "w": 5,
+      "h": 200
+    },
+    "required": true
+  },
+  "anode": {
+    "type": "anode",
+    "voltage": 1000,
+    "position": {
+      "x": 650,
+      "y": 150
+    },
+    "shape": {
+      "type": "rectangle",
+      "x": 650,
+      "y": 150,
+      "w": 5,
+      "h": 200
+    },
+    "required": true
+  },
+  "accelerator": {
+    "type": "accelerator",
+    "voltage": -50,
+    "position": {
+      "x": 100,
+      "y": 170
+    },
+    "shape": {
+      "type": "rectangle",
+      "x": 100,
+      "y": 170,
+      "w": 5,
+      "h": 160
+    },
+    "enabled": true,
+    "optional": true
+  },
+  "grid": {
+    "type": "grid",
+    "voltage": -20,
+    "position": {
+      "x": 600,
+      "y": 170
+    },
+    "shape": {
+      "type": "rectangle",
+      "x": 600,
+      "y": 170,
+      "w": 5,
+      "h": 160
+    },
+    "enabled": false,
+    "optional": true
+  },
+  "dynodes": [
+    {
+      "type": "dynode",
+      "voltage": 100,
+      "position": {
+        "x": 150,
+        "y": 180
+      },
+      "shape": {
+        "type": "rectangle",
+        "x": 150,
+        "y": 180,
+        "w": 5,
+        "h": 140
+      },
+      "hit": false,
+      "material": "Cs3Sb"
+    },
+    {
+      "type": "dynode",
+      "voltage": 200,
+      "position": {
+        "x": 200,
+        "y": 150
+      },
+      "shape": {
+        "type": "rectangle",
+        "x": 200,
+        "y": 150,
+        "w": 5,
+        "h": 140
+      },
+      "hit": false,
+      "material": "Cs3Sb"
+    },
+    {
+      "type": "dynode",
+      "voltage": 300,
+      "position": {
+        "x": 250,
+        "y": 180
+      },
+      "shape": {
+        "type": "rectangle",
+        "x": 250,
+        "y": 180,
+        "w": 5,
+        "h": 140
+      },
+      "hit": false,
+      "material": "CuBeO"
+    },
+    {
+      "type": "dynode",
+      "voltage": 400,
+      "position": {
+        "x": 300,
+        "y": 150
+      },
+      "shape": {
+        "type": "rectangle",
+        "x": 300,
+        "y": 150,
+        "w": 5,
+        "h": 140
+      },
+      "hit": false,
+      "material": "CuBeO"
+    },
+    {
+      "type": "dynode",
+      "voltage": 500,
+      "position": {
+        "x": 350,
+        "y": 180
+      },
+      "shape": {
+        "type": "rectangle",
+        "x": 350,
+        "y": 180,
+        "w": 5,
+        "h": 140
+      },
+      "hit": false,
+      "material": "CuBeO"
+    },
+    {
+      "type": "dynode",
+      "voltage": 600,
+      "position": {
+        "x": 400,
+        "y": 150
+      },
+      "shape": {
+        "type": "rectangle",
+        "x": 400,
+        "y": 150,
+        "w": 5,
+        "h": 140
+      },
+      "hit": false,
+      "material": "Cs3Sb"
+    },
+    {
+      "type": "dynode",
+      "voltage": 700,
+      "position": {
+        "x": 450,
+        "y": 180
+      },
+      "shape": {
+        "type": "rectangle",
+        "x": 450,
+        "y": 180,
+        "w": 5,
+        "h": 140
+      },
+      "hit": false,
+      "material": "Cs3Sb"
+    },
+    {
+      "type": "dynode",
+      "voltage": 800,
+      "position": {
+        "x": 500,
+        "y": 150
+      },
+      "shape": {
+        "type": "rectangle",
+        "x": 500,
+        "y": 150,
+        "w": 5,
+        "h": 140
+      },
+      "hit": false,
+      "material": "Cs3Sb"
+    }
+  ],
+  "simpleParams": {
+    "r": 2,
+    "beta": 0.7
+  },
+  "advancedParams": {
+    "sigma_E": 2.2,
+    "E_max": 1500,
+    "sigma_max": 2.5,
+    "s": 1.35,
+    "alpha": 0.9,
+    "delta_0": 2.4,
+    "E_0": 400,
+    "theta_m": 0.8
+  },
+  "useAdvancedModel": true
+}

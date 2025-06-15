@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumDraft - Test Runner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .button-group {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .test-type {
+            margin-top: 20px;
+            padding: 10px;
+            border-left: 4px solid #2196F3;
+            background-color: #E3F2FD;
+        }
+        #logs {
+            padding: 10px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            font-family: monospace;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 5px;
+        }
+        .log-error {
+            color: #D32F2F;
+            background-color: #FFEBEE;
+        }
+        .log-success {
+            color: #388E3C;
+            background-color: #E8F5E9;
+        }
+        .log-info {
+            color: #1976D2;
+            background-color: #E3F2FD;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>QuantumDraft - Test Runner</h1>
+        <p>Ejecutar pruebas unitarias, de integración y end-to-end</p>
+    </header>
+    
+    <div class="container">
+        <div class="button-group">
+            <button id="run-all-tests">Ejecutar todas las pruebas</button>
+            <button id="run-unit-tests">Pruebas unitarias</button>
+            <button id="run-integration-tests">Pruebas de integración</button>
+            <button id="run-e2e-tests">Pruebas end-to-end</button>
+            <button id="clear-results">Limpiar resultados</button>
+        </div>
+        
+        <div id="test-results">
+            <!-- Aquí se mostrarán los resultados de las pruebas -->
+        </div>
+        
+        <h3>Logs</h3>
+        <div id="logs"></div>
+    </div>
+
+    <!-- Inicializamos el estado de la simulación y objetos antes de cargar archivos -->
+    <script>
+        // Creamos un canvas virtual para las pruebas
+        const mockCanvas = document.createElement('canvas');
+        mockCanvas.width = 800;
+        mockCanvas.height = 600;
+        mockCanvas.id = 'simulation-canvas';
+        
+        // Mock del contexto de canvas con todas las funciones necesarias
+        const mockContext = {
+            clearRect: function() {},
+            beginPath: function() {},
+            moveTo: function() {},
+            lineTo: function() {},
+            stroke: function() {},
+            fill: function() {},
+            fillRect: function() {},
+            strokeRect: function() {},
+            arc: function() {},
+            closePath: function() {},
+            save: function() {},
+            restore: function() {},
+            translate: function() {},
+            rotate: function() {},
+            scale: function() {},
+            fillText: function() {},
+            strokeText: function() {},
+            setLineDash: function() {},
+            createLinearGradient: function() { 
+                return { 
+                    addColorStop: function() {} 
+                }; 
+            },
+            drawImage: function() {},
+            getImageData: function() { 
+                return { 
+                    data: new Uint8ClampedArray(4) 
+                }; 
+            },
+            putImageData: function() {},
+            setTransform: function() {}
+        };
+        
+        // Sobreescribir getContext para devolver nuestro contexto simulado
+        mockCanvas.getContext = function() {
+            return mockContext;
+        };
+        
+        // Objetos simulados para las pruebas
+        window.simulationState = {
+            running: false,
+            paused: false,
+            photons: [],
+            lastFrameTime: 0,
+            simSpeed: 1.0,
+            showTrails: true,
+            showField: false,
+            timeElapsed: 0,
+            statistics: {
+                detectedPhotons: 0,
+                emittedPhotons: 0,
+                averageGain: 0,
+                transitTime: 0,
+                quantumEfficiency: 0,
+                averageEnergy: 0,
+                averageVelocity: 0,
+                maxGamma: 1.0
+            }
+        };
+
+        // Simulamos elementos DOM que podrían no existir en el entorno de prueba
+        window.mockElements = {
+            'simulation-canvas': mockCanvas,
+            'stats-container': document.createElement('div'),
+            'voltage-container': document.createElement('div'),
+            'model-type': { value: 'simple' },
+            'advanced-model-controls': document.createElement('div'),
+            'simple-model-controls': document.createElement('div'),
+            'photocathode-voltage': { value: '-50' },
+            'anode-voltage': { value: '1000' },
+            'accelerator-enabled': { checked: false },
+            'accelerator-voltage': { value: '-30' },
+            'grid-enabled': { checked: false },
+            'grid-voltage': { value: '-20' },
+            'dynode-count': { value: '8' },
+            'gain-factor': { value: '3.5' },
+            'sigma-e': { value: '2.5' },
+            'vth': { value: '15.6' },
+            'vmax': { value: '2000' }
+        };
+        
+        // Añadir dinámicamente elementos para cada dinodo
+        for (let i = 1; i <= 20; i++) {
+            window.mockElements[`dynode-${i}-voltage`] = { value: `${i * 100}` };
+        }
+        
+        // Original getElementById para preservar la funcionalidad existente
+        const originalGetElementById = document.getElementById;
+        
+        // Sobreescribir getElementById para usar mocks cuando sea necesario
+        document.getElementById = function(id) {
+            // Primero intentamos obtener el elemento real
+            const element = originalGetElementById.call(document, id);
+            if (element) return element;
+            
+            // Si no existe, devolvemos un mock
+            if (window.mockElements[id]) {
+                return window.mockElements[id];
+            }
+            
+            // Para elementos que no hemos pre-creado, crear un mock genérico
+            window.mockElements[id] = {
+                value: '',
+                checked: false,
+                style: { display: 'none' },
+                dataset: {},
+                addEventListener: function() {},
+                querySelector: function() { return { textContent: '' }; },
+                appendChild: function() {},
+                innerHTML: ''
+            };
+            
+            return window.mockElements[id];
+        };
+        
+        // Mock del objeto window.requestAnimationFrame
+        window.requestAnimationFrame = function(callback) {
+            setTimeout(callback, 0);
+            return 0;
+        };
+        
+        // Mock para la función renderScene para que no intente manipular el DOM real
+        window.renderSceneOriginal = window.renderScene;
+        window.renderScene = function() {
+            // Versión simulada que no hace nada
+            console.log("Simulando renderScene (sin renderizar realmente)");
+        };
+        
+        // Mock para ElectricFieldCalculator
+        window.ElectricFieldCalculator = {
+            updateField: function() {},
+            getFieldAt: function(x, y) { return { Ex: 0, Ey: 0 }; },
+            drawField: function() {}
+        };
+        
+        // Mock del pool de partículas
+        window.photonPool = {
+            get: function() {
+                return {
+                    position: {x: 0, y: 0},
+                    velocity: {x: 0, y: 0},
+                    acceleration: {x: 0, y: 0},
+                    isActive: true,
+                    trail: [],
+                    lifetime: 0,
+                    color: '#ffffff',
+                    mass: 9.1093837e-31,
+                    charge: -1.602176634e-19,
+                    energy: 1.0,
+                    amplification: 1,
+                    hitCount: 0,
+                    trailMaxSize: 50
+                };
+            },
+            release: function(photon) {
+                photon.isActive = false;
+            }
+        };
+    </script>
+
+    <!-- Cargar los archivos de la aplicación -->
+    <script src="../js/config.js"></script>
+    <script src="../js/physics.js"></script>
+    <script src="../js/renderer.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/drawing.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/main.js"></script>
+    
+    <!-- Cargar framework de pruebas -->
+    <script src="test-framework.js"></script>
+    
+    <!-- Cargar pruebas específicas -->
+    <script src="physics-tests.js"></script>
+    <script src="config-tests.js"></script>
+    
+    <script>
+        // Redirigir console.log para mostrarlo en la página
+        (function() {
+            const originalConsoleLog = console.log;
+            const originalConsoleError = console.error;
+            const originalConsoleWarn = console.warn;
+            const originalConsoleInfo = console.info;
+            
+            const logsElement = document.getElementById('logs');
+            
+            console.log = function() {
+                const args = Array.from(arguments);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : arg
+                ).join(' ');
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = message;
+                logsElement.appendChild(logEntry);
+                
+                originalConsoleLog.apply(console, arguments);
+            };
+            
+            console.error = function() {
+                const args = Array.from(arguments);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : arg
+                ).join(' ');
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry log-error';
+                logEntry.textContent = message;
+                logsElement.appendChild(logEntry);
+                
+                originalConsoleError.apply(console, arguments);
+            };
+            
+            console.warn = function() {
+                const args = Array.from(arguments);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : arg
+                ).join(' ');
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry log-warn';
+                logEntry.textContent = message;
+                logsElement.appendChild(logEntry);
+                
+                originalConsoleWarn.apply(console, arguments);
+            };
+            
+            console.info = function() {
+                const args = Array.from(arguments);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : arg
+                ).join(' ');
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry log-info';
+                logEntry.textContent = message;
+                logsElement.appendChild(logEntry);
+                
+                originalConsoleInfo.apply(console, arguments);
+            };
+        })();
+        
+        // Configuración inicial para las pruebas
+        window.addEventListener('DOMContentLoaded', function() {
+            // Sobreescribir funciones de renderizado que dependen del DOM
+            window.renderScene = function() {
+                console.log("Mock renderScene llamado");
+            };
+            
+            // Event listeners para botones
+            document.getElementById('run-all-tests').addEventListener('click', function() {
+                runAllTests();
+            });
+            
+            document.getElementById('run-unit-tests').addEventListener('click', function() {
+                TestFramework.clearResults();
+                runUnitTests();
+            });
+            
+            document.getElementById('run-integration-tests').addEventListener('click', function() {
+                TestFramework.clearResults();
+                runIntegrationTests();
+            });
+            
+            document.getElementById('run-e2e-tests').addEventListener('click', function() {
+                TestFramework.clearResults();
+                runE2ETests();
+            });
+            
+            document.getElementById('clear-results').addEventListener('click', function() {
+                TestFramework.clearResults();
+                document.getElementById('logs').innerHTML = '';
+            });
+        });
+        
+        // Funciones para ejecutar pruebas
+        function runAllTests() {
+            console.log('Ejecutando todas las pruebas...');
+            TestFramework.clearResults();
+            runUnitTests();
+            runIntegrationTests();
+            runE2ETests();
+        }
+        
+        function runUnitTests() {
+            console.log('Ejecutando pruebas unitarias...');
+            // Las pruebas unitarias ya están definidas en los archivos cargados
+            // Simplemente mostrar los resultados
+            TestFramework.showResults();
+        }
+        
+        function runIntegrationTests() {
+            console.log('Ejecutando pruebas de integración...');
+            
+            // Ejecutar prueba de integración: generación y movimiento de partículas
+            suite('Integración - Generación y física de partículas', function() {
+                test('Emitir fotones desde fotocátodo y actualizar posiciones', function() {
+                    // Limpiar partículas existentes
+                    simulationState.photons = [];
+                    
+                    // Llamar a la función de emisión
+                    const count = 5;
+                    const emitted = emitPhotonsFromCathode(count);
+                    
+                    // Verificar que se emitieron los fotones
+                    assertEquals(count, emitted, 'Deben emitirse la cantidad exacta de fotones');
+                    assertEquals(count, simulationState.photons.length, 'Los fotones deben añadirse al estado');
+                    
+                    // Verificar que todos están activos
+                    let activeCount = 0;
+                    for (const photon of simulationState.photons) {
+                        if (photon.isActive) activeCount++;
+                    }
+                    
+                    assertEquals(count, activeCount, 'Todos los fotones emitidos deben estar activos');
+                    
+                    // Simular algunas actualizaciones de posición
+                    const dt = 0.016; // 16ms, típico para 60fps
+                    
+                    for (const photon of simulationState.photons) {
+                        // Posición inicial
+                        const initialX = photon.position.x;
+                        const initialY = photon.position.y;
+                        
+                        // Campo eléctrico simulado
+                        const electricField = {Ex: 10, Ey: 0};
+                        
+                        // Actualizar posición
+                        borisUpdate(photon, dt, electricField);
+                        
+                        // Verificar que la posición cambió
+                        assertTrue(
+                            photon.position.x !== initialX || photon.position.y !== initialY,
+                            'La posición debe cambiar tras la actualización'
+                        );
+                    }
+                });
+            });
+            
+            // Prueba de integración: UI y configuración
+            suite('Integración - UI y configuración', function() {
+                test('Cambiar configuración debe actualizar UI y viceversa', function() {
+                    // Guardar configuración original
+                    const originalVoltage = pmtConfig.photocathode.voltage;
+                    
+                    // Simular cambio en UI
+                    const mockEvent = {
+                        target: {
+                            id: 'photocathode-voltage',
+                            value: '-200'
+                        }
+                    };
+                    
+                    // Verificar si existe una función para manejar cambios de voltaje
+                    if (typeof updateElementVoltage === 'function') {
+                        updateElementVoltage('photocathode', 'photocathode', -200);
+                        
+                        // Verificar que el cambio se aplicó
+                        assertEquals(-200, pmtConfig.photocathode.voltage, 'El voltaje debe cambiar');
+                    } else {
+                        console.warn('Función updateElementVoltage no disponible');
+                    }
+                    
+                    // Restaurar configuración original
+                    pmtConfig.photocathode.voltage = originalVoltage;
+                });
+            });
+            
+            // Mostrar resultados
+            TestFramework.showResults();
+        }
+        
+        function runE2ETests() {
+            console.log('Ejecutando pruebas end-to-end...');
+            
+            // Prueba E2E: Flujo completo de simulación
+            suite('End-to-End - Flujo completo', function() {
+                test('Iniciar, pausar y detener simulación', function() {
+                    // Guardar estado original
+                    const originalRunning = simulationState.running;
+                    const originalPaused = simulationState.paused;
+                    
+                    // Iniciar simulación
+                    if (typeof startSimulation === 'function') {
+                        startSimulation();
+                        
+                        // Verificar que está ejecutándose
+                        assertTrue(
+                            simulationState.running,
+                            'La simulación debe estar ejecutándose'
+                        );
+                        assertFalse(
+                            simulationState.paused,
+                            'La simulación no debe estar pausada'
+                        );
+                        
+                        // Pausar simulación
+                        pauseSimulation();
+                        
+                        // Verificar que está pausada
+                        assertTrue(
+                            simulationState.running,
+                            'La simulación debe seguir ejecutándose en pausa'
+                        );
+                        assertTrue(
+                            simulationState.paused,
+                            'La simulación debe estar pausada'
+                        );
+                        
+                        // Detener simulación
+                        stopSimulation();
+                        
+                        // Verificar que está detenida
+                        assertFalse(
+                            simulationState.running,
+                            'La simulación debe estar detenida'
+                        );
+                        assertFalse(
+                            simulationState.paused,
+                            'La simulación no debe estar pausada'
+                        );
+                    } else {
+                        console.warn('Funciones de control de simulación no disponibles');
+                    }
+                    
+                    // Restaurar estado original
+                    simulationState.running = originalRunning;
+                    simulationState.paused = originalPaused;
+                });
+            });
+            
+            // Mostrar resultados
+            TestFramework.showResults();
+        }
+    </script>
+</body>
+</html>

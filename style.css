@@ -277,34 +277,32 @@ canvas:hover {
 #dynode-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    margin-bottom: 20px;
+}
+
+#dynode-table th, 
+#dynode-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
 }
 
 #dynode-table th {
-    background: var(--secondary);
-    color: var(--text);
-    padding: 8px 6px;
-    text-align: center;
+    background-color: #f2f2f2;
     position: sticky;
     top: 0;
+    z-index: 10;
 }
 
-#dynode-table td {
-    padding: 6px;
-    text-align: center;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-#dynode-table tr:nth-child(even) {
-    background: #f8fafc;
+#dynode-table tr:hover {
+    background-color: #f5f5f5;
 }
 
 #dynode-table input[type="number"] {
-    width: 60px;
-    padding: 2px 4px;
-    border: 1px solid #cbd5e1;
+    width: 80px;
+    padding: 4px;
+    border: 1px solid #ccc;
     border-radius: 3px;
-    text-align: center;
 }
 
 .simulation-stats {
@@ -316,26 +314,32 @@ canvas:hover {
 
 .stats-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
 }
 
 .stat-item {
     display: flex;
-    flex-direction: column;
-    text-align: center;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .stat-item label {
-    font-size: 0.8rem;
-    color: var(--secondary);
-    margin-bottom: 2px;
+    font-weight: bold;
+    margin-right: 10px;
 }
 
-.stat-item span {
-    font-weight: 600;
-    color: var(--accent);
-    font-size: 0.9rem;
+.stats-section {
+    grid-column: span 2;
+    margin-top: 10px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+.stats-section h5 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    color: #333;
 }
 
 /* Estados de elementos PMT */
@@ -613,4 +617,140 @@ button:focus, input:focus, select:focus {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+/* Estilo para elementos inactivos en la tabla */
+.inactive-element {
+    opacity: 0.6;
+    color: #888;
+    background-color: #f5f5f5;
+}
+
+/* Estilo para elementos requeridos */
+.status.required {
+    background-color: #4CAF50;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+
+/* Dialog para cargar configuración */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dialog-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.config-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.config-list li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.config-list li:hover {
+    background-color: #f5f5f5;
+}
+
+.delete-btn {
+    background-color: #ff5252;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Estilos para mejor visualización de elementos en el canvas */
+.photocathode-element {
+    fill: #3f51b5;
+    stroke: #1a237e;
+    stroke-width: 1px;
+}
+
+.anode-element {
+    fill: #f44336;
+    stroke: #b71c1c;
+    stroke-width: 1px;
+}
+
+.dynode-element {
+    fill: #9e9e9e;
+    stroke: #424242;
+    stroke-width: 1px;
+}
+
+.accelerator-element {
+    fill: #4caf50;
+    stroke: #1b5e20;
+    stroke-width: 1px;
+}
+
+.grid-element {
+    fill: #ff9800;
+    stroke: #e65100;
+    stroke-width: 1px;
+}
+
+/* Elemento golpeado (hit) */
+.element-hit {
+    fill: #ffeb3b !important;
+    stroke: #ffc107 !important;
+    filter: drop-shadow(0 0 5px rgba(255, 235, 59, 0.7));
+    transition: fill 0.1s ease-out;
+}
+
+/* Estados de simulación */
+.status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.status.running {
+    background-color: #4caf50;
+    color: white;
+}
+
+.status.paused {
+    background-color: #ff9800;
+    color: white;
+}
+
+.status.stopped {
+    background-color: #f44336;
+    color: white;
 }
