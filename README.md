@@ -13,8 +13,8 @@ Dibuja componentes, asignales voltaje y factor de multiplicación, y visualiza e
 ## 📸 Capturas de pantalla
 
 <p align="center">
-  <img src="docs/screenshot-canvas.png" alt="Canvas de dibujo" width="60%" />
-  <img src="docs/screenshot-photons.png" alt="Trayectorias de fotones" width="60%" />
+  <img src="recursos/proyect.png" alt="Canvas de dibujo" width="60%" />
+  <img src="recursos/prueba.png" alt="Trayectorias de fotones" width="60%" />
 </p>
 
 ---
