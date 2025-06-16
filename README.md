@@ -134,8 +134,8 @@ Este proyecto está bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE)
 
 ## 🤝 Contacto
 
-* **Autor**: Agustín Pérez
-* **Email**: [agustin@example.com](mailto:agustin@example.com)
+* **Autor**: Agustín Morcillo
+* **Email**: [agustin.morcillo1912@gmail.com](mailto:agustin.morcillo1912@gmail.com)
 * **Web**: [https://tu-sitio-web.com](https://tu-sitio-web.com)
 
 ---
