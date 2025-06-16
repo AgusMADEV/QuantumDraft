@@ -142,25 +142,24 @@ if (bounced) {
   }
 }
   // ——— Nueva lógica de colisión con shapes ———
-  shapes.forEach(s => {
+  // ——— Nueva lógica de colisión con shapes ———
+shapes.forEach(s => {
   let collided = false;
 
+  // Colisión con rectángulo
   if (s.type === 'rectangle') {
-    // Colisión con rectángulo real
     const { x: bx, y: by, w, h } = getBoundingBox(s);
-    // Expandimos la figura por el radio del fotón
     if (
       p.x > bx - p.radius &&
       p.x < bx + w + p.radius &&
       p.y > by - p.radius &&
       p.y < by + h + p.radius
     ) {
-      // Si está dentro del interior ampliado, colisiona
       collided = true;
     }
   }
+  // Colisión con elipse
   else if (s.type === 'ellipse') {
-    // Colisión con elipse real
     const { x: bx, y: by, w, h } = getBoundingBox(s);
     const cx = bx + w/2, cy = by + h/2;
     const rx = Math.abs(w)/2 + p.radius;
@@ -170,18 +169,41 @@ if (bounced) {
       collided = true;
     }
   }
-  else if (s.type === 'polygon' || s.type === 'path') {
-    // Colisión con polígono o path: miramos la distancia mínima
-    // de p al segmento más cercano del polígono:
+  // Colisión con polígonos, paths y solo trazos de lápiz (no borrador)
+  else if (
+    s.type === 'polygon' ||
+    s.type === 'path'    ||
+    (s.type === 'freehand' && s.composite === 'source-over')
+  ) {
     const pts = s.points;
     for (let i = 0; i < pts.length; i++) {
-      const a = pts[i], b = pts[(i+1)%pts.length];
-      // Proyección de p en el segmento ab:
-      const vx = b.x - a.x, vy = b.y - a.y;
-      const t = Math.max(0, Math.min(1, ((p.x - a.x)*vx + (p.y - a.y)*vy)/(vx*vx+vy*vy)));
-      const px = a.x + t*vx, py = a.y + t*vy;
-      const dist2 = (p.x-px)**2 + (p.y-py)**2;
-      if (dist2 <= p.radius*p.radius) {
+      const a = pts[i];
+      let b;
+
+      if (s.type === 'polygon') {
+        // Cierra el polígono enlazando el último punto con el primero
+        b = pts[(i + 1) % pts.length];
+      } else {
+        // Path o freehand: solo segmentos consecutivos
+        if (i + 1 < pts.length) {
+          b = pts[i + 1];
+        } else {
+          break;
+        }
+      }
+
+      // Proyección de p sobre el segmento ab
+      const vx = b.x - a.x;
+      const vy = b.y - a.y;
+      const t = Math.max(0, Math.min(1,
+        ((p.x - a.x) * vx + (p.y - a.y) * vy) /
+        (vx*vx + vy*vy)
+      ));
+      const px = a.x + t * vx;
+      const py = a.y + t * vy;
+      const dist2 = (p.x - px)**2 + (p.y - py)**2;
+
+      if (dist2 <= p.radius * p.radius) {
         collided = true;
         break;
       }
@@ -190,8 +212,7 @@ if (bounced) {
 
   if (!collided) return;
 
-  // ——— Rebote específico según la cara de impacto ———
-  // Calculamos distancias a cada “cara” de la bounding box
+  // Una vez detectada la colisión, calculamos la cara de impacto y rebotamos:
   const { x: bx, y: by, w, h } = getBoundingBox(s);
   const ex = bx - p.radius,
         ey = by - p.radius,
@@ -203,7 +224,6 @@ if (bounced) {
         dBottom = Math.abs(p.y - (ey + eh));
   const minD = Math.min(dLeft, dRight, dTop, dBottom);
 
-  // Invertimos solo la componente necesaria y recolocamos
   if (minD === dLeft || minD === dRight) {
     p.vx *= -1;
     p.x = (minD === dLeft) ? ex : (ex + ew);
@@ -212,14 +232,14 @@ if (bounced) {
     p.y = (minD === dTop) ? ey : (ey + eh);
   }
 
-  // ——— Multiplicación según k ———
+  // Si la forma tiene factor k > 1, generamos fotones adicionales
   const mult = s.k || 1;
   if (mult > 1) {
     const speed = Math.hypot(p.vx, p.vy);
     for (let n = 0; n < mult - 1; n++) {
-      const phi = Math.random()*2*Math.PI;
+      const phi = Math.random() * 2 * Math.PI;
       const newP = new Photon(p.x, p.y);
-      const vf = 0.8 + Math.random()*0.4;
+      const vf = 0.8 + Math.random() * 0.4;
       newP.vx = speed * vf * Math.cos(phi);
       newP.vy = speed * vf * Math.sin(phi);
       photons.push(newP);
