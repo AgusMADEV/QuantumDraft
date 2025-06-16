@@ -5,6 +5,13 @@
 const canvas = document.getElementById('drawing-canvas');
 const ctx = canvas.getContext('2d');
 
+// --- Helper para saber si un píxel está borrado (alpha === 0) ---
+function isPixelSolid(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  const pixel = ctx.getImageData(ix, iy, 1, 1).data;
+  return pixel[3] !== 0;
+}
+
 let currentTool = 'pencil',
     isDrawing = false;
 let startX = 0, startY = 0, lastX = 0, lastY = 0;
@@ -100,152 +107,137 @@ function updatePhoton(p, dt) {
   p.x += p.vx * dt;
   p.y += p.vy * dt;
 
-  // --- Rebote en los bordes del canvas (preservando velocidad) ---
-  // --- Rebote suave en los bordes del canvas ---
-const r = p.radius;
-const W = canvas.width, H = canvas.height;
-let bounced = false;
+  // --- Rebote en los bordes del canvas ---
+  const r = p.radius;
+  const W = canvas.width, H = canvas.height;
+  let bounced = false;
 
-// Izquierda
-if (p.x - r < 0) {
-  // reflejamos el exceso: nueva x = r + (r - p.x)
-  p.x = 2*r - p.x;
-  p.vx *= -1;
-  bounced = true;
-}
-// Derecha
-if (p.x + r > W) {
-  // reflejamos sobre el borde W - r
-  p.x = 2*(W - r) - p.x;
-  p.vx *= -1;
-  bounced = true;
-}
-// Arriba
-if (p.y - r < 0) {
-  p.y = 2*r - p.y;
-  p.vy *= -1;
-  bounced = true;
-}
-// Abajo
-if (p.y + r > H) {
-  p.y = 2*(H - r) - p.y;
-  p.vy *= -1;
-  bounced = true;
-}
-
-if (bounced) {
-  // opcional: reajuste de magnitud si quieres asegurar que no cambia 
-  const speed = Math.hypot(p.vx, p.vy);
-  if (speed > 0) {
-    // mantén la propia velocidad original
-    // (si ya la invertimos, no hace falta normalizar de nuevo a menos que quieras)
+  if (p.x - r < 0) {
+    p.x = 2*r - p.x; p.vx *= -1; bounced = true;
   }
-}
-  // ——— Nueva lógica de colisión con shapes ———
-  // ——— Nueva lógica de colisión con shapes ———
-shapes.forEach(s => {
-  let collided = false;
+  if (p.x + r > W) {
+    p.x = 2*(W - r) - p.x; p.vx *= -1; bounced = true;
+  }
+  if (p.y - r < 0) {
+    p.y = 2*r - p.y; p.vy *= -1; bounced = true;
+  }
+  if (p.y + r > H) {
+    p.y = 2*(H - r) - p.y; p.vy *= -1; bounced = true;
+  }
 
-  // Colisión con rectángulo
-  if (s.type === 'rectangle') {
-    const { x: bx, y: by, w, h } = getBoundingBox(s);
-    if (
-      p.x > bx - p.radius &&
-      p.x < bx + w + p.radius &&
-      p.y > by - p.radius &&
-      p.y < by + h + p.radius
+  // (opcional normalización de velocidad si se desea)
+
+  // --- Colisión con shapes, respetando zonas borradas ---
+  shapes.forEach(s => {
+    let collided = false;
+
+    // Colisión con rectángulo
+    if (s.type === 'rectangle') {
+      const { x: bx, y: by, w, h } = getBoundingBox(s);
+      if (
+        p.x > bx - p.radius &&
+        p.x < bx + w + p.radius &&
+        p.y > by - p.radius &&
+        p.y < by + h + p.radius &&
+        isPixelSolid(p.x, p.y)
+      ) {
+        collided = true;
+      }
+    }
+    // Colisión con elipse
+    else if (s.type === 'ellipse') {
+      const { x: bx, y: by, w, h } = getBoundingBox(s);
+      const cx = bx + w/2, cy = by + h/2;
+      const rx = Math.abs(w)/2 + p.radius;
+      const ry = Math.abs(h)/2 + p.radius;
+      const dx = p.x - cx, dy = p.y - cy;
+      if (
+        (dx*dx)/(rx*rx) + (dy*dy)/(ry*ry) <= 1 &&
+        isPixelSolid(p.x, p.y)
+      ) {
+        collided = true;
+      }
+    }
+    // Colisión con polígonos, paths y trazos de lápiz (no borrador)
+    else if (
+      s.type === 'polygon' ||
+      s.type === 'path'    ||
+      (s.type === 'freehand' && s.composite === 'source-over')
     ) {
-      collided = true;
-    }
-  }
-  // Colisión con elipse
-  else if (s.type === 'ellipse') {
-    const { x: bx, y: by, w, h } = getBoundingBox(s);
-    const cx = bx + w/2, cy = by + h/2;
-    const rx = Math.abs(w)/2 + p.radius;
-    const ry = Math.abs(h)/2 + p.radius;
-    const dx = p.x - cx, dy = p.y - cy;
-    if ((dx*dx)/(rx*rx) + (dy*dy)/(ry*ry) <= 1) {
-      collided = true;
-    }
-  }
-  // Colisión con polígonos, paths y solo trazos de lápiz (no borrador)
-  else if (
-    s.type === 'polygon' ||
-    s.type === 'path'    ||
-    (s.type === 'freehand' && s.composite === 'source-over')
-  ) {
-    const pts = s.points;
-    for (let i = 0; i < pts.length; i++) {
-      const a = pts[i];
-      let b;
+      const pts = s.points;
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i];
+        let b;
 
-      if (s.type === 'polygon') {
-        // Cierra el polígono enlazando el último punto con el primero
-        b = pts[(i + 1) % pts.length];
-      } else {
-        // Path o freehand: solo segmentos consecutivos
-        if (i + 1 < pts.length) {
-          b = pts[i + 1];
+        if (s.type === 'polygon') {
+          // cerrar polígono
+          b = pts[(i + 1) % pts.length];
         } else {
+          // path o freehand: solo segmentos consecutivos
+          if (i + 1 < pts.length) {
+            b = pts[i + 1];
+          } else {
+            break;
+          }
+        }
+
+        // Proyección de p sobre el segmento ab
+        const vx = b.x - a.x;
+        const vy = b.y - a.y;
+        const t = Math.max(0, Math.min(1,
+          ((p.x - a.x) * vx + (p.y - a.y) * vy) /
+          (vx*vx + vy*vy)
+        ));
+        const px = a.x + t * vx;
+        const py = a.y + t * vy;
+        const dist2 = (p.x - px)**2 + (p.y - py)**2;
+
+        if (
+          dist2 <= p.radius * p.radius &&
+          isPixelSolid(px, py)
+        ) {
+          collided = true;
           break;
         }
       }
+    }
 
-      // Proyección de p sobre el segmento ab
-      const vx = b.x - a.x;
-      const vy = b.y - a.y;
-      const t = Math.max(0, Math.min(1,
-        ((p.x - a.x) * vx + (p.y - a.y) * vy) /
-        (vx*vx + vy*vy)
-      ));
-      const px = a.x + t * vx;
-      const py = a.y + t * vy;
-      const dist2 = (p.x - px)**2 + (p.y - py)**2;
+    if (!collided) return;
 
-      if (dist2 <= p.radius * p.radius) {
-        collided = true;
-        break;
+    // --- Rebote según la cara de impacto ---
+    const { x: bx, y: by, w, h } = getBoundingBox(s);
+    const ex = bx - p.radius,
+          ey = by - p.radius,
+          ew = w + 2*p.radius,
+          eh = h + 2*p.radius;
+    const dLeft   = Math.abs(p.x - ex),
+          dRight  = Math.abs(p.x - (ex + ew)),
+          dTop    = Math.abs(p.y - ey),
+          dBottom = Math.abs(p.y - (ey + eh));
+    const minD = Math.min(dLeft, dRight, dTop, dBottom);
+
+    if (minD === dLeft || minD === dRight) {
+      p.vx *= -1;
+      p.x = (minD === dLeft) ? ex : (ex + ew);
+    } else {
+      p.vy *= -1;
+      p.y = (minD === dTop) ? ey : (ey + eh);
+    }
+
+    // --- Photomultiplicación según k ---
+    const mult = s.k || 1;
+    if (mult > 1) {
+      const speed = Math.hypot(p.vx, p.vy);
+      for (let n = 0; n < mult - 1; n++) {
+        const phi = Math.random() * 2 * Math.PI;
+        const newP = new Photon(p.x, p.y);
+        const vf = 0.8 + Math.random() * 0.4;
+        newP.vx = speed * vf * Math.cos(phi);
+        newP.vy = speed * vf * Math.sin(phi);
+        photons.push(newP);
       }
     }
-  }
-
-  if (!collided) return;
-
-  // Una vez detectada la colisión, calculamos la cara de impacto y rebotamos:
-  const { x: bx, y: by, w, h } = getBoundingBox(s);
-  const ex = bx - p.radius,
-        ey = by - p.radius,
-        ew = w + 2*p.radius,
-        eh = h + 2*p.radius;
-  const dLeft   = Math.abs(p.x - ex),
-        dRight  = Math.abs(p.x - (ex + ew)),
-        dTop    = Math.abs(p.y - ey),
-        dBottom = Math.abs(p.y - (ey + eh));
-  const minD = Math.min(dLeft, dRight, dTop, dBottom);
-
-  if (minD === dLeft || minD === dRight) {
-    p.vx *= -1;
-    p.x = (minD === dLeft) ? ex : (ex + ew);
-  } else {
-    p.vy *= -1;
-    p.y = (minD === dTop) ? ey : (ey + eh);
-  }
-
-  // Si la forma tiene factor k > 1, generamos fotones adicionales
-  const mult = s.k || 1;
-  if (mult > 1) {
-    const speed = Math.hypot(p.vx, p.vy);
-    for (let n = 0; n < mult - 1; n++) {
-      const phi = Math.random() * 2 * Math.PI;
-      const newP = new Photon(p.x, p.y);
-      const vf = 0.8 + Math.random() * 0.4;
-      newP.vx = speed * vf * Math.cos(phi);
-      newP.vy = speed * vf * Math.sin(phi);
-      photons.push(newP);
-    }
-  }
-});
+  });
 
   // Registrar trayectoria
   p.path.push({ x: p.x, y: p.y });
